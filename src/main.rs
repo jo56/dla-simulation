@@ -17,7 +17,7 @@ use std::io;
 use std::time::Duration;
 
 #[derive(Parser, Debug)]
-#[command(name = "dla-sim-tui")]
+#[command(name = "dla-simulator")]
 #[command(about = "Diffusion-Limited Aggregation simulation in the terminal")]
 struct Args {
     /// Number of particles to simulate (100-10000)

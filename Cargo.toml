@@ -1,6 +1,6 @@
 [package]
-name = "dla-sim-tui"
-version = "0.1.0"
+name = "dla-simulator"
+version = "0.0.1"
 edition = "2021"
 description = "Diffusion-Limited Aggregation simulation in the terminal"
 authors = ["johno"]
