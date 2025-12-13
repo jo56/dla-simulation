@@ -28,7 +28,7 @@ struct Args {
     #[arg(short = 's', long, default_value = "1.0")]
     stickiness: f32,
 
-    /// Initial seed pattern (point, line, cross, circle, diamond, square, triangle, star, spiral, scatter, multipoint, xshape)
+    /// Initial seed pattern (point, line, cross, circle, diamond, square, spiral, scatter, multipoint, xshape)
     #[arg(long, default_value = "point")]
     seed: String,
 
@@ -47,8 +47,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "circle" => SeedPattern::Circle,
         "diamond" => SeedPattern::Diamond,
         "square" => SeedPattern::Square,
-        "triangle" => SeedPattern::Triangle,
-        "star" => SeedPattern::Star,
         "spiral" => SeedPattern::Spiral,
         "scatter" => SeedPattern::Scatter,
         "multipoint" | "multi-point" => SeedPattern::MultiPoint,
@@ -132,12 +130,10 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('4') => app.set_seed_pattern(SeedPattern::Circle),
                         KeyCode::Char('5') => app.set_seed_pattern(SeedPattern::Diamond),
                         KeyCode::Char('6') => app.set_seed_pattern(SeedPattern::Square),
-                        KeyCode::Char('7') => app.set_seed_pattern(SeedPattern::Triangle),
-                        KeyCode::Char('8') => app.set_seed_pattern(SeedPattern::Star),
+                        KeyCode::Char('7') => app.set_seed_pattern(SeedPattern::MultiPoint),
+                        KeyCode::Char('8') => app.set_seed_pattern(SeedPattern::XShape),
                         KeyCode::Char('9') => app.set_seed_pattern(SeedPattern::Spiral),
                         KeyCode::Char('0') => app.set_seed_pattern(SeedPattern::Scatter),
-                        KeyCode::Char('[') => app.set_seed_pattern(SeedPattern::MultiPoint),
-                        KeyCode::Char(']') => app.set_seed_pattern(SeedPattern::XShape),
                         KeyCode::Char('c') | KeyCode::Char('C') => app.cycle_color_scheme(),
                         KeyCode::Char('a') | KeyCode::Char('A') => app.toggle_color_by_age(),
                         KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),

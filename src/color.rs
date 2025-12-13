@@ -28,19 +28,6 @@ impl ColorScheme {
         }
     }
 
-    pub fn all() -> &'static [ColorScheme] {
-        &[
-            ColorScheme::Ice,
-            ColorScheme::Fire,
-            ColorScheme::Plasma,
-            ColorScheme::Viridis,
-            ColorScheme::Rainbow,
-            ColorScheme::Grayscale,
-            ColorScheme::Ocean,
-            ColorScheme::Neon,
-        ]
-    }
-
     pub fn next(&self) -> ColorScheme {
         match self {
             ColorScheme::Ice => ColorScheme::Fire,

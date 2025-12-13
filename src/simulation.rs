@@ -10,8 +10,6 @@ pub enum SeedPattern {
     Circle,
     Diamond,
     Square,
-    Triangle,
-    Star,
     Spiral,
     Scatter,
     MultiPoint,
@@ -27,30 +25,11 @@ impl SeedPattern {
             SeedPattern::Circle => "Circle",
             SeedPattern::Diamond => "Diamond",
             SeedPattern::Square => "Square",
-            SeedPattern::Triangle => "Triangle",
-            SeedPattern::Star => "Star",
             SeedPattern::Spiral => "Spiral",
             SeedPattern::Scatter => "Scatter",
             SeedPattern::MultiPoint => "Multi-Point",
             SeedPattern::XShape => "X-Shape",
         }
-    }
-
-    pub fn all() -> &'static [SeedPattern] {
-        &[
-            SeedPattern::Point,
-            SeedPattern::Line,
-            SeedPattern::Cross,
-            SeedPattern::Circle,
-            SeedPattern::Diamond,
-            SeedPattern::Square,
-            SeedPattern::Triangle,
-            SeedPattern::Star,
-            SeedPattern::Spiral,
-            SeedPattern::Scatter,
-            SeedPattern::MultiPoint,
-            SeedPattern::XShape,
-        ]
     }
 
     pub fn next(&self) -> SeedPattern {
@@ -60,9 +39,7 @@ impl SeedPattern {
             SeedPattern::Cross => SeedPattern::Circle,
             SeedPattern::Circle => SeedPattern::Diamond,
             SeedPattern::Diamond => SeedPattern::Square,
-            SeedPattern::Square => SeedPattern::Triangle,
-            SeedPattern::Triangle => SeedPattern::Star,
-            SeedPattern::Star => SeedPattern::Spiral,
+            SeedPattern::Square => SeedPattern::Spiral,
             SeedPattern::Spiral => SeedPattern::Scatter,
             SeedPattern::Scatter => SeedPattern::MultiPoint,
             SeedPattern::MultiPoint => SeedPattern::XShape,
@@ -78,9 +55,7 @@ impl SeedPattern {
             SeedPattern::Circle => SeedPattern::Cross,
             SeedPattern::Diamond => SeedPattern::Circle,
             SeedPattern::Square => SeedPattern::Diamond,
-            SeedPattern::Triangle => SeedPattern::Square,
-            SeedPattern::Star => SeedPattern::Triangle,
-            SeedPattern::Spiral => SeedPattern::Star,
+            SeedPattern::Spiral => SeedPattern::Square,
             SeedPattern::Scatter => SeedPattern::Spiral,
             SeedPattern::MultiPoint => SeedPattern::Scatter,
             SeedPattern::XShape => SeedPattern::MultiPoint,
@@ -372,79 +347,6 @@ impl DlaSimulation {
                 }
                 self.particles_stuck = count;
                 self.max_radius = (half_size as f32) * 1.414; // Diagonal
-            }
-            SeedPattern::Triangle => {
-                // Equilateral triangle pointing up
-                let cx = self.grid_width as f32 / 2.0;
-                let cy = self.grid_height as f32 / 2.0;
-                let size = 15.0_f32.min((self.grid_width / 6) as f32).min((self.grid_height / 6) as f32);
-                let mut count = 0;
-                // Three vertices
-                let height = size * 0.866; // sqrt(3)/2
-                let top = (cx, cy - height * 0.67);
-                let bottom_left = (cx - size / 2.0, cy + height * 0.33);
-                let bottom_right = (cx + size / 2.0, cy + height * 0.33);
-
-                // Draw edges using Bresenham-like approach
-                let edges = [
-                    (top, bottom_left),
-                    (bottom_left, bottom_right),
-                    (bottom_right, top),
-                ];
-                for (start, end) in edges {
-                    let steps = ((end.0 - start.0).abs().max((end.1 - start.1).abs()) as usize).max(1);
-                    for i in 0..=steps {
-                        let t = i as f32 / steps as f32;
-                        let x = (start.0 + (end.0 - start.0) * t) as usize;
-                        let y = (start.1 + (end.1 - start.1) * t) as usize;
-                        if x < self.grid_width && y < self.grid_height {
-                            let idx = y * self.grid_width + x;
-                            if self.grid[idx].is_none() {
-                                self.grid[idx] = Some(0);
-                                count += 1;
-                            }
-                        }
-                    }
-                }
-                self.particles_stuck = count;
-                self.max_radius = size;
-            }
-            SeedPattern::Star => {
-                // 5-pointed star
-                let cx = self.grid_width as f32 / 2.0;
-                let cy = self.grid_height as f32 / 2.0;
-                let outer_radius = 15.0_f32.min((self.grid_width / 8) as f32).min((self.grid_height / 8) as f32);
-                let inner_radius = outer_radius * 0.4;
-                let mut count = 0;
-
-                // Calculate 10 points (alternating outer and inner)
-                let mut points = Vec::with_capacity(10);
-                for i in 0..10 {
-                    let angle = (i as f32 * 36.0 - 90.0).to_radians();
-                    let r = if i % 2 == 0 { outer_radius } else { inner_radius };
-                    points.push((cx + r * angle.cos(), cy + r * angle.sin()));
-                }
-
-                // Draw lines between consecutive points
-                for i in 0..10 {
-                    let start = points[i];
-                    let end = points[(i + 1) % 10];
-                    let steps = ((end.0 - start.0).abs().max((end.1 - start.1).abs()) as usize).max(1);
-                    for j in 0..=steps {
-                        let t = j as f32 / steps as f32;
-                        let x = (start.0 + (end.0 - start.0) * t) as usize;
-                        let y = (start.1 + (end.1 - start.1) * t) as usize;
-                        if x < self.grid_width && y < self.grid_height {
-                            let idx = y * self.grid_width + x;
-                            if self.grid[idx].is_none() {
-                                self.grid[idx] = Some(0);
-                                count += 1;
-                            }
-                        }
-                    }
-                }
-                self.particles_stuck = count;
-                self.max_radius = outer_radius;
             }
             SeedPattern::Spiral => {
                 // Archimedean spiral from center
