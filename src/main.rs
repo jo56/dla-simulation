@@ -20,7 +20,7 @@ use std::time::Duration;
 #[command(name = "dla-simulator")]
 #[command(about = "Diffusion-Limited Aggregation simulation in the terminal")]
 struct Args {
-    /// Number of particles to simulate (100-10000)
+    /// Number of particles to simulate (auto-capped to ~20% of grid area)
     #[arg(short = 'p', long, default_value = "5000")]
     particles: usize,
 
@@ -28,11 +28,11 @@ struct Args {
     #[arg(short = 's', long, default_value = "1.0")]
     stickiness: f32,
 
-    /// Initial seed pattern (point, line, cross, circle)
+    /// Initial seed pattern (point, line, cross, circle, diamond, square, triangle, star, spiral, scatter, multipoint, xshape)
     #[arg(long, default_value = "point")]
     seed: String,
 
-    /// Simulation speed (steps per frame, 1-20)
+    /// Simulation speed (steps per frame, 1-50)
     #[arg(long, default_value = "5")]
     speed: usize,
 }
@@ -45,6 +45,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "line" => SeedPattern::Line,
         "cross" => SeedPattern::Cross,
         "circle" => SeedPattern::Circle,
+        "diamond" => SeedPattern::Diamond,
+        "square" => SeedPattern::Square,
+        "triangle" => SeedPattern::Triangle,
+        "star" => SeedPattern::Star,
+        "spiral" => SeedPattern::Spiral,
+        "scatter" => SeedPattern::Scatter,
+        "multipoint" | "multi-point" => SeedPattern::MultiPoint,
+        "xshape" | "x-shape" | "x" => SeedPattern::XShape,
         _ => SeedPattern::Point,
     };
 
@@ -66,10 +74,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (canvas_width, canvas_height) = ui::get_canvas_size(frame_rect, false);
     let mut app = App::new(canvas_width, canvas_height);
 
-    // Apply CLI args
-    app.simulation.num_particles = args.particles.clamp(100, 10000);
+    // Apply CLI args (particle count capped to grid-based max)
+    let max_particles = app.simulation.max_particles();
+    app.simulation.num_particles = args.particles.clamp(100, max_particles);
     app.simulation.stickiness = args.stickiness.clamp(0.1, 1.0);
-    app.steps_per_frame = args.speed.clamp(1, 20);
+    app.steps_per_frame = args.speed.clamp(1, 50);
     app.simulation.reset_with_seed(seed_pattern);
 
     // Run the app
@@ -121,6 +130,14 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('2') => app.set_seed_pattern(SeedPattern::Line),
                         KeyCode::Char('3') => app.set_seed_pattern(SeedPattern::Cross),
                         KeyCode::Char('4') => app.set_seed_pattern(SeedPattern::Circle),
+                        KeyCode::Char('5') => app.set_seed_pattern(SeedPattern::Diamond),
+                        KeyCode::Char('6') => app.set_seed_pattern(SeedPattern::Square),
+                        KeyCode::Char('7') => app.set_seed_pattern(SeedPattern::Triangle),
+                        KeyCode::Char('8') => app.set_seed_pattern(SeedPattern::Star),
+                        KeyCode::Char('9') => app.set_seed_pattern(SeedPattern::Spiral),
+                        KeyCode::Char('0') => app.set_seed_pattern(SeedPattern::Scatter),
+                        KeyCode::Char('[') => app.set_seed_pattern(SeedPattern::MultiPoint),
+                        KeyCode::Char(']') => app.set_seed_pattern(SeedPattern::XShape),
                         KeyCode::Char('c') | KeyCode::Char('C') => app.cycle_color_scheme(),
                         KeyCode::Char('a') | KeyCode::Char('A') => app.toggle_color_by_age(),
                         KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),

@@ -176,7 +176,8 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let mut content = vec![
         make_control("Space", "pause/resume"),
         make_control("R", "reset"),
-        make_control("1-4", "seed pattern"),
+        make_control("1-0", "seed patterns"),
+        make_control("[/]", "more patterns"),
         make_control("C", "cycle color"),
         make_control("A", "toggle age color"),
         make_control("Tab", "next param"),
@@ -240,8 +241,8 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
 
 fn render_help_overlay(frame: &mut Frame, area: Rect) {
     // Center the help dialog
-    let help_width = 50.min(area.width.saturating_sub(4));
-    let help_height = 20.min(area.height.saturating_sub(4));
+    let help_width = 54.min(area.width.saturating_sub(4));
+    let help_height = 26.min(area.height.saturating_sub(4));
     let x = (area.width.saturating_sub(help_width)) / 2;
     let y = (area.height.saturating_sub(help_height)) / 2;
 
@@ -274,7 +275,9 @@ fn render_help_overlay(frame: &mut Frame, area: Rect) {
         Line::from("  Lower = more dendritic branches"),
         Line::from(""),
         Line::from(Span::styled("SEED PATTERNS:", Style::default().fg(Color::Yellow))),
-        Line::from("  1=Point  2=Line  3=Cross  4=Circle"),
+        Line::from("  1=Point    2=Line     3=Cross    4=Circle"),
+        Line::from("  5=Diamond  6=Square   7=Triangle 8=Star"),
+        Line::from("  9=Spiral   0=Scatter  [=Multi    ]=XShape"),
         Line::from(""),
         Line::from(Span::styled("Use Tab to select parameter,", Style::default().fg(Color::Gray))),
         Line::from(Span::styled("then ↑/↓ to adjust value.", Style::default().fg(Color::Gray))),

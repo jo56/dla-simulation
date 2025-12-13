@@ -85,7 +85,7 @@ impl App {
                 self.simulation.reset_with_seed(new_pattern);
             }
             Focus::ColorScheme => self.color_scheme = self.color_scheme.next(),
-            Focus::Speed => self.steps_per_frame = (self.steps_per_frame + 1).min(20),
+            Focus::Speed => self.steps_per_frame = (self.steps_per_frame + 1).min(50),
         }
     }
 
@@ -157,7 +157,7 @@ impl App {
 
     /// Increase simulation speed
     pub fn increase_speed(&mut self) {
-        self.steps_per_frame = (self.steps_per_frame + 1).min(20);
+        self.steps_per_frame = (self.steps_per_frame + 1).min(50);
     }
 
     /// Decrease simulation speed

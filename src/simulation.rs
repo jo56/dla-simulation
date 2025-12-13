@@ -8,6 +8,14 @@ pub enum SeedPattern {
     Line,
     Cross,
     Circle,
+    Diamond,
+    Square,
+    Triangle,
+    Star,
+    Spiral,
+    Scatter,
+    MultiPoint,
+    XShape,
 }
 
 impl SeedPattern {
@@ -17,6 +25,14 @@ impl SeedPattern {
             SeedPattern::Line => "Line",
             SeedPattern::Cross => "Cross",
             SeedPattern::Circle => "Circle",
+            SeedPattern::Diamond => "Diamond",
+            SeedPattern::Square => "Square",
+            SeedPattern::Triangle => "Triangle",
+            SeedPattern::Star => "Star",
+            SeedPattern::Spiral => "Spiral",
+            SeedPattern::Scatter => "Scatter",
+            SeedPattern::MultiPoint => "Multi-Point",
+            SeedPattern::XShape => "X-Shape",
         }
     }
 
@@ -26,6 +42,14 @@ impl SeedPattern {
             SeedPattern::Line,
             SeedPattern::Cross,
             SeedPattern::Circle,
+            SeedPattern::Diamond,
+            SeedPattern::Square,
+            SeedPattern::Triangle,
+            SeedPattern::Star,
+            SeedPattern::Spiral,
+            SeedPattern::Scatter,
+            SeedPattern::MultiPoint,
+            SeedPattern::XShape,
         ]
     }
 
@@ -34,16 +58,32 @@ impl SeedPattern {
             SeedPattern::Point => SeedPattern::Line,
             SeedPattern::Line => SeedPattern::Cross,
             SeedPattern::Cross => SeedPattern::Circle,
-            SeedPattern::Circle => SeedPattern::Point,
+            SeedPattern::Circle => SeedPattern::Diamond,
+            SeedPattern::Diamond => SeedPattern::Square,
+            SeedPattern::Square => SeedPattern::Triangle,
+            SeedPattern::Triangle => SeedPattern::Star,
+            SeedPattern::Star => SeedPattern::Spiral,
+            SeedPattern::Spiral => SeedPattern::Scatter,
+            SeedPattern::Scatter => SeedPattern::MultiPoint,
+            SeedPattern::MultiPoint => SeedPattern::XShape,
+            SeedPattern::XShape => SeedPattern::Point,
         }
     }
 
     pub fn prev(&self) -> SeedPattern {
         match self {
-            SeedPattern::Point => SeedPattern::Circle,
+            SeedPattern::Point => SeedPattern::XShape,
             SeedPattern::Line => SeedPattern::Point,
             SeedPattern::Cross => SeedPattern::Line,
             SeedPattern::Circle => SeedPattern::Cross,
+            SeedPattern::Diamond => SeedPattern::Circle,
+            SeedPattern::Square => SeedPattern::Diamond,
+            SeedPattern::Triangle => SeedPattern::Square,
+            SeedPattern::Star => SeedPattern::Triangle,
+            SeedPattern::Spiral => SeedPattern::Star,
+            SeedPattern::Scatter => SeedPattern::Spiral,
+            SeedPattern::MultiPoint => SeedPattern::Scatter,
+            SeedPattern::XShape => SeedPattern::MultiPoint,
         }
     }
 }
@@ -242,6 +282,293 @@ impl DlaSimulation {
                 self.particles_stuck = count;
                 self.max_radius = radius;
             }
+            SeedPattern::Diamond => {
+                // Diamond (rotated square) seed
+                let cx = self.grid_width / 2;
+                let cy = self.grid_height / 2;
+                let size = 12.min(self.grid_width / 8).min(self.grid_height / 8);
+                let mut count = 0;
+                for i in 0..=size {
+                    // Top-right edge
+                    if cx + i < self.grid_width && cy >= size - i {
+                        let idx = (cy - (size - i)) * self.grid_width + (cx + i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    // Bottom-right edge
+                    if cx + i < self.grid_width && cy + (size - i) < self.grid_height {
+                        let idx = (cy + (size - i)) * self.grid_width + (cx + i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    // Top-left edge
+                    if cx >= i && cy >= size - i {
+                        let idx = (cy - (size - i)) * self.grid_width + (cx - i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    // Bottom-left edge
+                    if cx >= i && cy + (size - i) < self.grid_height {
+                        let idx = (cy + (size - i)) * self.grid_width + (cx - i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = size as f32;
+            }
+            SeedPattern::Square => {
+                // Square outline seed
+                let cx = self.grid_width / 2;
+                let cy = self.grid_height / 2;
+                let half_size = 10.min(self.grid_width / 8).min(self.grid_height / 8);
+                let mut count = 0;
+                // Draw four edges
+                for i in 0..=half_size * 2 {
+                    let x = cx - half_size + i;
+                    // Top edge
+                    if x < self.grid_width && cy >= half_size {
+                        let idx = (cy - half_size) * self.grid_width + x;
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    // Bottom edge
+                    if x < self.grid_width && cy + half_size < self.grid_height {
+                        let idx = (cy + half_size) * self.grid_width + x;
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                }
+                for i in 1..half_size * 2 {
+                    let y = cy - half_size + i;
+                    // Left edge
+                    if cx >= half_size && y < self.grid_height {
+                        let idx = y * self.grid_width + (cx - half_size);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    // Right edge
+                    if cx + half_size < self.grid_width && y < self.grid_height {
+                        let idx = y * self.grid_width + (cx + half_size);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = (half_size as f32) * 1.414; // Diagonal
+            }
+            SeedPattern::Triangle => {
+                // Equilateral triangle pointing up
+                let cx = self.grid_width as f32 / 2.0;
+                let cy = self.grid_height as f32 / 2.0;
+                let size = 15.0_f32.min((self.grid_width / 6) as f32).min((self.grid_height / 6) as f32);
+                let mut count = 0;
+                // Three vertices
+                let height = size * 0.866; // sqrt(3)/2
+                let top = (cx, cy - height * 0.67);
+                let bottom_left = (cx - size / 2.0, cy + height * 0.33);
+                let bottom_right = (cx + size / 2.0, cy + height * 0.33);
+
+                // Draw edges using Bresenham-like approach
+                let edges = [
+                    (top, bottom_left),
+                    (bottom_left, bottom_right),
+                    (bottom_right, top),
+                ];
+                for (start, end) in edges {
+                    let steps = ((end.0 - start.0).abs().max((end.1 - start.1).abs()) as usize).max(1);
+                    for i in 0..=steps {
+                        let t = i as f32 / steps as f32;
+                        let x = (start.0 + (end.0 - start.0) * t) as usize;
+                        let y = (start.1 + (end.1 - start.1) * t) as usize;
+                        if x < self.grid_width && y < self.grid_height {
+                            let idx = y * self.grid_width + x;
+                            if self.grid[idx].is_none() {
+                                self.grid[idx] = Some(0);
+                                count += 1;
+                            }
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = size;
+            }
+            SeedPattern::Star => {
+                // 5-pointed star
+                let cx = self.grid_width as f32 / 2.0;
+                let cy = self.grid_height as f32 / 2.0;
+                let outer_radius = 15.0_f32.min((self.grid_width / 8) as f32).min((self.grid_height / 8) as f32);
+                let inner_radius = outer_radius * 0.4;
+                let mut count = 0;
+
+                // Calculate 10 points (alternating outer and inner)
+                let mut points = Vec::with_capacity(10);
+                for i in 0..10 {
+                    let angle = (i as f32 * 36.0 - 90.0).to_radians();
+                    let r = if i % 2 == 0 { outer_radius } else { inner_radius };
+                    points.push((cx + r * angle.cos(), cy + r * angle.sin()));
+                }
+
+                // Draw lines between consecutive points
+                for i in 0..10 {
+                    let start = points[i];
+                    let end = points[(i + 1) % 10];
+                    let steps = ((end.0 - start.0).abs().max((end.1 - start.1).abs()) as usize).max(1);
+                    for j in 0..=steps {
+                        let t = j as f32 / steps as f32;
+                        let x = (start.0 + (end.0 - start.0) * t) as usize;
+                        let y = (start.1 + (end.1 - start.1) * t) as usize;
+                        if x < self.grid_width && y < self.grid_height {
+                            let idx = y * self.grid_width + x;
+                            if self.grid[idx].is_none() {
+                                self.grid[idx] = Some(0);
+                                count += 1;
+                            }
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = outer_radius;
+            }
+            SeedPattern::Spiral => {
+                // Archimedean spiral from center
+                let cx = self.grid_width as f32 / 2.0;
+                let cy = self.grid_height as f32 / 2.0;
+                let max_radius = 20.0_f32.min((self.grid_width / 6) as f32).min((self.grid_height / 6) as f32);
+                let mut count = 0;
+
+                // Spiral: r = a * theta
+                let turns = 3.0;
+                let steps = (turns * 360.0) as usize;
+                let a = max_radius / (turns * std::f32::consts::TAU);
+
+                for i in 0..steps {
+                    let theta = (i as f32).to_radians();
+                    let r = a * theta;
+                    let x = (cx + r * theta.cos()) as usize;
+                    let y = (cy + r * theta.sin()) as usize;
+                    if x < self.grid_width && y < self.grid_height {
+                        let idx = y * self.grid_width + x;
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = max_radius;
+            }
+            SeedPattern::Scatter => {
+                // Random scattered points in center region
+                let cx = self.grid_width / 2;
+                let cy = self.grid_height / 2;
+                let scatter_radius = 20.min(self.grid_width / 6).min(self.grid_height / 6);
+                let num_seeds = 15;
+                let mut count = 0;
+                let mut rng = rand::thread_rng();
+
+                for _ in 0..num_seeds {
+                    let angle = rng.gen_range(0.0..std::f32::consts::TAU);
+                    let r = rng.gen_range(0.0..scatter_radius as f32);
+                    let x = (cx as f32 + r * angle.cos()) as usize;
+                    let y = (cy as f32 + r * angle.sin()) as usize;
+                    if x < self.grid_width && y < self.grid_height {
+                        let idx = y * self.grid_width + x;
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = scatter_radius as f32;
+            }
+            SeedPattern::MultiPoint => {
+                // Multiple seed points spread across the grid (creates competing growth)
+                let cx = self.grid_width / 2;
+                let cy = self.grid_height / 2;
+                let spread = 25.min(self.grid_width / 5).min(self.grid_height / 5);
+                let mut count = 0;
+
+                // Place 5 seed points: center and 4 around it
+                let points = [
+                    (cx, cy),
+                    (cx - spread, cy),
+                    (cx + spread, cy),
+                    (cx, cy - spread),
+                    (cx, cy + spread),
+                ];
+
+                for (px, py) in points {
+                    if px < self.grid_width && py < self.grid_height {
+                        let idx = py * self.grid_width + px;
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = spread as f32;
+            }
+            SeedPattern::XShape => {
+                // Diagonal cross (X shape)
+                let cx = self.grid_width / 2;
+                let cy = self.grid_height / 2;
+                let arm_len = 10.min(self.grid_width / 8).min(self.grid_height / 8);
+                let mut count = 0;
+
+                for i in 0..arm_len {
+                    // Top-left to bottom-right diagonal
+                    if cx >= i && cy >= i {
+                        let idx = (cy - i) * self.grid_width + (cx - i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    if cx + i < self.grid_width && cy + i < self.grid_height {
+                        let idx = (cy + i) * self.grid_width + (cx + i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    // Top-right to bottom-left diagonal
+                    if cx + i < self.grid_width && cy >= i {
+                        let idx = (cy - i) * self.grid_width + (cx + i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                    if cx >= i && cy + i < self.grid_height {
+                        let idx = (cy + i) * self.grid_width + (cx - i);
+                        if self.grid[idx].is_none() {
+                            self.grid[idx] = Some(0);
+                            count += 1;
+                        }
+                    }
+                }
+                self.particles_stuck = count;
+                self.max_radius = (arm_len as f32) * 1.414; // Diagonal length
+            }
         }
 
         self.paused = false;
@@ -276,13 +603,26 @@ impl DlaSimulation {
         if new_width != self.grid_width || new_height != self.grid_height {
             self.grid_width = new_width;
             self.grid_height = new_height;
+            // Cap particles to new grid's max
+            let max = self.max_particles();
+            if self.num_particles > max {
+                self.num_particles = max;
+            }
             self.reset();
         }
     }
 
-    /// Adjust num_particles (clamped to 100-10000)
+    /// Get the maximum sensible particle count for this grid size
+    /// DLA patterns are sparse fractals, so ~20% of grid area is a reasonable max
+    pub fn max_particles(&self) -> usize {
+        let grid_area = self.grid_width * self.grid_height;
+        (grid_area / 5).max(100) // 20% of grid, minimum 100
+    }
+
+    /// Adjust num_particles (clamped to 100 and grid-based max)
     pub fn adjust_particles(&mut self, delta: i32) {
-        let new_val = (self.num_particles as i32 + delta).clamp(100, 10000) as usize;
+        let max = self.max_particles() as i32;
+        let new_val = (self.num_particles as i32 + delta).clamp(100, max) as usize;
         self.num_particles = new_val;
     }
 
