@@ -1,4 +1,4 @@
-# DLA Simulation TUI
+# DLA Simulator TUI
 
 A terminal-based Diffusion-Limited Aggregation (DLA) simulation using high-resolution Braille character rendering.
 
