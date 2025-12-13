@@ -1,5 +1,5 @@
 use crate::braille;
-use crate::color::ColorScheme;
+use crate::color::{ColorLut, ColorScheme};
 use crate::simulation::{DlaSimulation, SeedPattern};
 
 /// Focus state for parameter editing in the sidebar
@@ -42,6 +42,7 @@ impl Focus {
 pub struct App {
     pub simulation: DlaSimulation,
     pub color_scheme: ColorScheme,
+    pub color_lut: ColorLut,
     pub color_by_age: bool,
     pub focus: Focus,
     pub fullscreen_mode: bool,
@@ -52,9 +53,11 @@ pub struct App {
 impl App {
     pub fn new(canvas_width: u16, canvas_height: u16) -> Self {
         let (sim_width, sim_height) = braille::calculate_simulation_size(canvas_width, canvas_height);
+        let color_scheme = ColorScheme::default();
         Self {
             simulation: DlaSimulation::new(sim_width, sim_height),
-            color_scheme: ColorScheme::default(),
+            color_lut: color_scheme.build_lut(),
+            color_scheme,
             color_by_age: true,
             focus: Focus::default(),
             fullscreen_mode: false,
@@ -84,7 +87,10 @@ impl App {
                 let new_pattern = self.simulation.seed_pattern.next();
                 self.simulation.reset_with_seed(new_pattern);
             }
-            Focus::ColorScheme => self.color_scheme = self.color_scheme.next(),
+            Focus::ColorScheme => {
+                self.color_scheme = self.color_scheme.next();
+                self.color_lut = self.color_scheme.build_lut();
+            }
             Focus::Speed => self.steps_per_frame = (self.steps_per_frame + 1).min(50),
         }
     }
@@ -99,7 +105,10 @@ impl App {
                 let new_pattern = self.simulation.seed_pattern.prev();
                 self.simulation.reset_with_seed(new_pattern);
             }
-            Focus::ColorScheme => self.color_scheme = self.color_scheme.prev(),
+            Focus::ColorScheme => {
+                self.color_scheme = self.color_scheme.prev();
+                self.color_lut = self.color_scheme.build_lut();
+            }
             Focus::Speed => self.steps_per_frame = (self.steps_per_frame.saturating_sub(1)).max(1),
         }
     }
@@ -137,6 +146,7 @@ impl App {
     /// Cycle color scheme
     pub fn cycle_color_scheme(&mut self) {
         self.color_scheme = self.color_scheme.next();
+        self.color_lut = self.color_scheme.build_lut();
     }
 
     /// Toggle fullscreen mode

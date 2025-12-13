@@ -211,12 +211,12 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
-    // Render Braille pattern
+    // Render Braille pattern (uses LUT for fast color lookup)
     let cells = braille::render_to_braille(
         &app.simulation,
         inner.width,
         inner.height,
-        &app.color_scheme,
+        &app.color_lut,
         app.color_by_age,
     );
 

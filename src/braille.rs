@@ -1,4 +1,4 @@
-use crate::color::ColorScheme;
+use crate::color::{map_from_lut, ColorLut};
 use crate::simulation::DlaSimulation;
 use ratatui::style::Color;
 
@@ -14,7 +14,6 @@ use ratatui::style::Color;
 /// ```
 ///
 /// Unicode Braille patterns: U+2800 to U+28FF (256 patterns)
-
 const BRAILLE_BASE: u32 = 0x2800;
 
 /// Dot position to bit mapping for Braille characters
@@ -24,7 +23,7 @@ const BRAILLE_DOTS: [[u8; 4]; 2] = [
 ];
 
 /// A single rendered Braille cell with position and color
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct BrailleCell {
     pub x: u16,
     pub y: u16,
@@ -32,18 +31,14 @@ pub struct BrailleCell {
     pub color: Color,
 }
 
-/// Render the simulation grid to Braille characters
+/// Render the simulation grid to Braille characters (uses LUT for fast color lookup)
 pub fn render_to_braille(
     simulation: &DlaSimulation,
     canvas_width: u16,
     canvas_height: u16,
-    color_scheme: &ColorScheme,
+    color_lut: &ColorLut,
     color_by_age: bool,
 ) -> Vec<BrailleCell> {
-    let mut cells = Vec::with_capacity((canvas_width * canvas_height) as usize);
-
-    // Each Braille character covers 2x4 simulation pixels
-    // Calculate scale factors to map simulation grid to canvas
     let sim_width = simulation.grid_width;
     let sim_height = simulation.grid_height;
 
@@ -51,9 +46,14 @@ pub fn render_to_braille(
     let braille_width = canvas_width as usize * 2;
     let braille_height = canvas_height as usize * 4;
 
-    // Scale factors
+    // Scale factors (pre-calculated once)
     let scale_x = sim_width as f32 / braille_width as f32;
     let scale_y = sim_height as f32 / braille_height as f32;
+
+    // Pre-calculate for color mapping
+    let inv_num_particles = 1.0 / simulation.num_particles as f32;
+
+    let mut cells = Vec::with_capacity((canvas_width * canvas_height) as usize);
 
     for cy in 0..canvas_height {
         for cx in 0..canvas_width {
@@ -62,16 +62,17 @@ pub fn render_to_braille(
             let mut dot_count: usize = 0;
 
             // Sample the 2x4 dots for this Braille character
+            let base_bx = cx as usize * 2;
+            let base_by = cy as usize * 4;
+
             for dx in 0..2 {
                 for dy in 0..4 {
-                    // Calculate simulation grid position
-                    let braille_x = cx as usize * 2 + dx;
-                    let braille_y = cy as usize * 4 + dy;
+                    let braille_x = base_bx + dx;
+                    let braille_y = base_by + dy;
 
                     let sim_x = (braille_x as f32 * scale_x) as usize;
                     let sim_y = (braille_y as f32 * scale_y) as usize;
 
-                    // Check if this simulation cell is occupied
                     if let Some(age) = simulation.get_cell(sim_x, sim_y) {
                         pattern |= BRAILLE_DOTS[dx][dy];
                         total_age += age as f32;
@@ -85,10 +86,9 @@ pub fn render_to_braille(
                 let braille_char = char::from_u32(BRAILLE_BASE + pattern as u32).unwrap_or(' ');
 
                 let color = if color_by_age && dot_count > 0 {
-                    // Average age for color mapping
                     let avg_age = total_age / dot_count as f32;
-                    let t = avg_age / simulation.num_particles as f32;
-                    color_scheme.map(t)
+                    let t = avg_age * inv_num_particles;
+                    map_from_lut(color_lut, t)
                 } else {
                     Color::White
                 };

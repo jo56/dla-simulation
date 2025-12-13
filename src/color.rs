@@ -1,5 +1,15 @@
 use ratatui::style::Color;
 
+/// Pre-computed color lookup table (256 entries for fast gradient access)
+pub type ColorLut = [Color; 256];
+
+/// Fast color lookup from pre-computed LUT (t should be 0.0-1.0)
+#[inline]
+pub fn map_from_lut(lut: &ColorLut, t: f32) -> Color {
+    let idx = (t.clamp(0.0, 1.0) * 255.0) as usize;
+    lut[idx]
+}
+
 /// Color schemes for visualization
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ColorScheme {
@@ -68,6 +78,16 @@ impl ColorScheme {
             ColorScheme::Neon => Self::neon_gradient(t),
         };
         Color::Rgb(r, g, b)
+    }
+
+    /// Build a 256-entry lookup table for fast color access
+    /// Call this once when color scheme changes, then use map_from_lut() for rendering
+    pub fn build_lut(&self) -> ColorLut {
+        let mut lut = [Color::White; 256];
+        for i in 0..256 {
+            lut[i] = self.map(i as f32 / 255.0);
+        }
+        lut
     }
 
     fn ice_gradient(t: f32) -> (u8, u8, u8) {

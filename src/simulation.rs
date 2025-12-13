@@ -1,3 +1,4 @@
+use rand::rngs::ThreadRng;
 use rand::Rng;
 
 // Simulation constants
@@ -5,7 +6,7 @@ const WALK_STEP_SIZE: f32 = 2.0;
 const MAX_WALK_ITERATIONS: usize = 10000;
 const SPAWN_RADIUS_OFFSET: f32 = 10.0;
 const MIN_SPAWN_RADIUS: f32 = 50.0;
-const ESCAPE_MULTIPLIER: f32 = 2.0;
+const ESCAPE_MULTIPLIER_SQ: f32 = 4.0; // 2.0 squared, for distance comparisons
 const BOUNDARY_MARGIN: f32 = 1.0;
 
 /// Seed pattern types for initial structure
@@ -82,6 +83,7 @@ pub struct DlaSimulation {
     max_radius: f32,
     pub paused: bool,
     pub seed_pattern: SeedPattern,
+    rng: ThreadRng,
 }
 
 impl DlaSimulation {
@@ -96,6 +98,7 @@ impl DlaSimulation {
             max_radius: 1.0,
             paused: false,
             seed_pattern: SeedPattern::Point,
+            rng: rand::thread_rng(),
         };
         sim.reset();
         sim
@@ -113,25 +116,31 @@ impl DlaSimulation {
             return false;
         }
 
-        let mut rng = rand::thread_rng();
         let (center_x, center_y) = self.center();
 
         // Spawn radius - outside the structure
         let spawn_radius = (self.max_radius + SPAWN_RADIUS_OFFSET).max(MIN_SPAWN_RADIUS);
 
+        // Pre-calculate squared escape distance (avoids sqrt in hot loop)
+        let escape_dist_sq = spawn_radius * spawn_radius * ESCAPE_MULTIPLIER_SQ;
+
+        // Pre-calculate boundary limits (avoids repeated subtraction)
+        let x_max = self.grid_width as f32 - BOUNDARY_MARGIN - 1.0;
+        let y_max = self.grid_height as f32 - BOUNDARY_MARGIN - 1.0;
+
         // Spawn particle on a circle
-        let angle = rng.gen_range(0.0..std::f32::consts::TAU);
+        let angle = self.rng.gen_range(0.0..std::f32::consts::TAU);
         let mut x = center_x + spawn_radius * angle.cos();
         let mut y = center_y + spawn_radius * angle.sin();
 
         // Random walk until it sticks or escapes
         for _ in 0..MAX_WALK_ITERATIONS {
-            // Check if we've gone too far
+            // Check if we've gone too far (using squared distance to avoid sqrt)
             let dx = x - center_x;
             let dy = y - center_y;
-            let dist = (dx * dx + dy * dy).sqrt();
+            let dist_sq = dx * dx + dy * dy;
 
-            if dist > spawn_radius * ESCAPE_MULTIPLIER {
+            if dist_sq > escape_dist_sq {
                 // Escaped, restart
                 return true;
             }
@@ -156,7 +165,7 @@ impl DlaSimulation {
 
                         if self.grid[nidx].is_some() {
                             // Neighbor is stuck, maybe stick here
-                            if rng.gen::<f32>() < self.stickiness {
+                            if self.rng.gen::<f32>() < self.stickiness {
                                 should_stick = true;
                                 break 'outer;
                             }
@@ -170,7 +179,7 @@ impl DlaSimulation {
                     self.grid[idx] = Some(self.particles_stuck);
                     self.particles_stuck += 1;
 
-                    // Update max radius
+                    // Update max radius (need actual distance for spawn radius calculation)
                     let dx = ix as f32 - center_x;
                     let dy = iy as f32 - center_y;
                     let dist = (dx * dx + dy * dy).sqrt();
@@ -181,13 +190,13 @@ impl DlaSimulation {
             }
 
             // Random walk step
-            let walk_angle = rng.gen_range(0.0..std::f32::consts::TAU);
+            let walk_angle = self.rng.gen_range(0.0..std::f32::consts::TAU);
             x += WALK_STEP_SIZE * walk_angle.cos();
             y += WALK_STEP_SIZE * walk_angle.sin();
 
             // Clamp to bounds
-            x = x.clamp(BOUNDARY_MARGIN, self.grid_width as f32 - BOUNDARY_MARGIN - 1.0);
-            y = y.clamp(BOUNDARY_MARGIN, self.grid_height as f32 - BOUNDARY_MARGIN - 1.0);
+            x = x.clamp(BOUNDARY_MARGIN, x_max);
+            y = y.clamp(BOUNDARY_MARGIN, y_max);
         }
 
         true
@@ -342,14 +351,13 @@ impl DlaSimulation {
 
     /// Dense noisy blob offset from center for asymmetric growth
     fn seed_noise_patch(&mut self) {
-        let mut rng = rand::thread_rng();
         let (grid_cx, grid_cy) = self.center();
         let min_dim = self.grid_width.min(self.grid_height) as f32;
         let radius = (min_dim * 0.22).clamp(6.0, 30.0);
         let radius_i = radius as i32;
         let jitter = (radius_i / 3).max(1);
-        let mut patch_cx = (self.grid_width as i32 / 3) + rng.gen_range(-jitter..=jitter);
-        let mut patch_cy = (self.grid_height as i32 / 3) + rng.gen_range(-jitter..=jitter);
+        let mut patch_cx = (self.grid_width as i32 / 3) + self.rng.gen_range(-jitter..=jitter);
+        let mut patch_cy = (self.grid_height as i32 / 3) + self.rng.gen_range(-jitter..=jitter);
         patch_cx = patch_cx.clamp(1, self.grid_width as i32 - 2);
         patch_cy = patch_cy.clamp(1, self.grid_height as i32 - 2);
 
@@ -364,7 +372,7 @@ impl DlaSimulation {
                 if dist <= radius {
                     let falloff = 1.0 - dist / radius;
                     let stick_prob = 0.35 + falloff * 0.65; // Dense core, noisy edges
-                    if rng.gen::<f32>() < stick_prob {
+                    if self.rng.gen::<f32>() < stick_prob {
                         let idx = (y as usize) * self.grid_width + (x as usize);
                         if self.grid[idx].is_none() {
                             self.grid[idx] = Some(0);
@@ -401,11 +409,10 @@ impl DlaSimulation {
         let scatter_radius = 20.min(self.grid_width / 6).min(self.grid_height / 6);
         let num_seeds = 15;
         let mut count = 0;
-        let mut rng = rand::thread_rng();
 
         for _ in 0..num_seeds {
-            let angle = rng.gen_range(0.0..std::f32::consts::TAU);
-            let r = rng.gen_range(0.0..scatter_radius as f32);
+            let angle = self.rng.gen_range(0.0..std::f32::consts::TAU);
+            let r = self.rng.gen_range(0.0..scatter_radius as f32);
             let x = (cx as f32 + r * angle.cos()) as usize;
             let y = (cy as f32 + r * angle.sin()) as usize;
             if x < self.grid_width && y < self.grid_height {
