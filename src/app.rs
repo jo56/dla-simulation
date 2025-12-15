@@ -48,6 +48,7 @@ pub struct App {
     pub fullscreen_mode: bool,
     pub steps_per_frame: usize,
     pub show_help: bool,
+    pub help_scroll: u16,
 }
 
 impl App {
@@ -63,6 +64,7 @@ impl App {
             fullscreen_mode: false,
             steps_per_frame: 5,
             show_help: false,
+            help_scroll: 0,
         }
     }
 
@@ -157,6 +159,19 @@ impl App {
     /// Toggle help overlay
     pub fn toggle_help(&mut self) {
         self.show_help = !self.show_help;
+        if self.show_help {
+            self.help_scroll = 0; // Reset scroll when opening
+        }
+    }
+
+    /// Scroll help content up
+    pub fn scroll_help_up(&mut self) {
+        self.help_scroll = self.help_scroll.saturating_sub(1);
+    }
+
+    /// Scroll help content down
+    pub fn scroll_help_down(&mut self, max_scroll: u16) {
+        self.help_scroll = (self.help_scroll + 1).min(max_scroll);
     }
 
     /// Resize simulation to match new canvas size

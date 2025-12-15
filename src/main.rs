@@ -154,8 +154,20 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char(']') => app.adjust_highlight(5),
                         KeyCode::Tab => app.next_focus(),
                         KeyCode::BackTab => app.prev_focus(),
-                        KeyCode::Up => app.adjust_focused_up(),
-                        KeyCode::Down => app.adjust_focused_down(),
+                        KeyCode::Up => {
+                            if app.show_help {
+                                app.scroll_help_up();
+                            } else {
+                                app.adjust_focused_up();
+                            }
+                        }
+                        KeyCode::Down => {
+                            if app.show_help {
+                                app.scroll_help_down(ui::HELP_CONTENT_LINES);
+                            } else {
+                                app.adjust_focused_down();
+                            }
+                        }
                         KeyCode::Char('+') | KeyCode::Char('=') => app.increase_speed(),
                         KeyCode::Char('-') | KeyCode::Char('_') => app.decrease_speed(),
                         KeyCode::Esc => {

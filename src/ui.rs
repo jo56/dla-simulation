@@ -1,7 +1,7 @@
 use crate::app::{App, Focus};
 use crate::braille;
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
@@ -9,6 +9,9 @@ use ratatui::{
 };
 
 const SIDEBAR_WIDTH: u16 = 22;
+
+/// Number of lines in the help content (for scroll calculations)
+pub const HELP_CONTENT_LINES: u16 = 71;
 
 // UI color scheme
 const BORDER_COLOR: Color = Color::Cyan;
@@ -42,7 +45,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     if app.show_help {
-        render_help_overlay(frame, area);
+        render_help_overlay(frame, area, app);
     }
 }
 
@@ -252,10 +255,10 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
     }
 }
 
-fn render_help_overlay(frame: &mut Frame, area: Rect) {
+fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
     // Center the help dialog
     let help_width = 56.min(area.width.saturating_sub(4));
-    let help_height = 34.min(area.height.saturating_sub(4));
+    let help_height = area.height.saturating_sub(4).min(40);
     let x = (area.width.saturating_sub(help_width)) / 2;
     let y = (area.height.saturating_sub(help_height)) / 2;
 
@@ -269,43 +272,101 @@ fn render_help_overlay(frame: &mut Frame, area: Rect) {
     // Clear the background
     frame.render_widget(Clear, help_area);
 
-    // Help overlay uses distinct styling (Double border, Yellow) to stand out
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Double)
-        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
-        .title(" Help - Press H or ? to close ");
-
+    // Build expanded help content
     let content = vec![
         Line::from(""),
         Line::from(Span::styled("DIFFUSION-LIMITED AGGREGATION", Style::default().fg(BORDER_COLOR))),
         Line::from(""),
-        Line::from("DLA simulates particles randomly walking"),
-        Line::from("until they stick to a growing structure,"),
-        Line::from("creating fractal snowflake-like patterns."),
+        Line::from("Particles perform random walks until they"),
+        Line::from("touch the growing structure and stick."),
+        Line::from("This creates fractal patterns like"),
+        Line::from("snowflakes or lightning."),
         Line::from(""),
-        Line::from(Span::styled("SEED PATTERNS:", Style::default().fg(HIGHLIGHT_COLOR))),
-        Line::from("  1=Point    2=Line     3=Cross    4=Circle"),
-        Line::from("  5=Ring     6=Block    7=Multi    8=Starburst"),
-        Line::from("  9=Noise    0=Scatter"),
+        Line::from(Span::styled("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", Style::default().fg(DIM_TEXT_COLOR))),
         Line::from(""),
-        Line::from(Span::styled("ADVANCED CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
-        Line::from("  M=color mode   I=invert colors"),
-        Line::from("  N=neighborhood (4/8/24 neighbors)"),
-        Line::from("  B=boundary     S=spawn mode"),
-        Line::from("  W/E=walk step  [/]=highlight recent"),
+        Line::from(Span::styled("SEED PATTERNS (1-0 keys):", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from("  1=Point     Single center (classic DLA)"),
+        Line::from("  2=Line      Horizontal, symmetric growth"),
+        Line::from("  3=Cross     Four-way growth pattern"),
+        Line::from("  4=Circle    Ring, grows inward/outward"),
+        Line::from("  5=Ring      Thick hollow ring"),
+        Line::from("  6=Block     Solid square, surface growth"),
+        Line::from("  7=Multi     Multiple competing centers"),
+        Line::from("  8=Starburst Radial spokes with rim"),
+        Line::from("  9=Noise     Dense blob, offset center"),
+        Line::from("  0=Scatter   Random scattered seeds"),
+        Line::from(""),
+        Line::from(Span::styled("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", Style::default().fg(DIM_TEXT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("ADVANCED SETTINGS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("M - Color Mode:", Style::default().fg(TEXT_COLOR))),
+        Line::from("    Age = when particle stuck (old→new)"),
+        Line::from("    Distance = how far from center"),
+        Line::from("    Density = neighbors when stuck"),
+        Line::from("    Direction = approach angle"),
+        Line::from(""),
+        Line::from(Span::styled("N - Neighborhood:", Style::default().fg(TEXT_COLOR))),
+        Line::from("    VonNeumann (4) = up/down/left/right"),
+        Line::from("      → angular, cross-like patterns"),
+        Line::from("    Moore (8) = includes diagonals"),
+        Line::from("      → natural fractal look"),
+        Line::from("    Extended (24) = 2-cell radius"),
+        Line::from("      → dense, blob-like growth"),
+        Line::from(""),
+        Line::from(Span::styled("B - Boundary:", Style::default().fg(TEXT_COLOR))),
+        Line::from("    Clamp = stop at edge"),
+        Line::from("    Wrap = wrap to opposite side"),
+        Line::from("    Bounce = reflect off edges"),
+        Line::from("    Stick = can stick to edges"),
+        Line::from("    Absorb = respawn at edge"),
+        Line::from(""),
+        Line::from(Span::styled("S - Spawn Mode:", Style::default().fg(TEXT_COLOR))),
+        Line::from("    Circle/Edges/Corners/Random"),
+        Line::from("    Top/Bottom/Left/Right"),
+        Line::from(""),
+        Line::from(Span::styled("W/E - Walk Step Size:", Style::default().fg(TEXT_COLOR))),
+        Line::from("    Larger = faster, coarser patterns"),
+        Line::from("    Smaller = slower, finer detail"),
+        Line::from(""),
+        Line::from(Span::styled("I - Invert Colors", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("[/] - Highlight Recent particles", Style::default().fg(TEXT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", Style::default().fg(DIM_TEXT_COLOR))),
         Line::from(""),
         Line::from(Span::styled("BASIC CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
-        Line::from("  Space=pause  R=reset  C=colors  V=fullscreen"),
-        Line::from("  Tab/↑↓=adjust parameters  +/-=speed"),
+        Line::from("  Space = Pause/Resume"),
+        Line::from("  R = Reset simulation"),
+        Line::from("  C = Cycle color scheme"),
+        Line::from("  A = Toggle color-by-age"),
+        Line::from("  V = Toggle fullscreen"),
+        Line::from("  Tab/↑↓ = Adjust parameters"),
+        Line::from("  +/- = Adjust speed"),
+        Line::from("  Q = Quit"),
         Line::from(""),
-        Line::from(Span::styled("Lower stickiness = more dendritic branches", Style::default().fg(DIM_TEXT_COLOR))),
     ];
+
+    let content_height = content.len() as u16;
+    let visible_height = help_height.saturating_sub(2); // minus borders
+    let max_scroll = content_height.saturating_sub(visible_height);
+    let is_scrollable = max_scroll > 0;
+
+    // Update title to show scroll hint if scrollable
+    let title = if is_scrollable {
+        " Help (↑↓ scroll, H to close) "
+    } else {
+        " Help (H to close) "
+    };
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .title(title);
 
     let paragraph = Paragraph::new(content)
         .block(block)
-        .alignment(Alignment::Center)
-        .wrap(Wrap { trim: true });
+        .scroll((app.help_scroll, 0));
 
     frame.render_widget(paragraph, help_area);
 }
