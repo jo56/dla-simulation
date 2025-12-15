@@ -189,6 +189,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
 
     let mut content = vec![
         make_control("Space", "pause/resume"),
+        make_control("H/?", "help"),
         make_control("R", "reset"),
         make_control("1-0", "seed patterns"),
         make_control("C", "color scheme"),
@@ -197,7 +198,6 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         make_control("B", &format!("bnd: {}", settings.boundary_behavior.name())),
         make_control("S", &format!("spn: {}", settings.spawn_mode.name())),
         make_control("W/E", &format!("step: {:.1}", settings.walk_step_size)),
-        make_control("H/?", "help"),
         make_control("Q", "quit"),
     ];
 
