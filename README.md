@@ -33,6 +33,12 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 cargo install --git https://github.com/jo56/dla-simulation
 ```
 
+After installation, run directly:
+
+```bash
+dla-simulation
+```
+
 ### From source
 
 ```bash
@@ -47,10 +53,12 @@ cargo run --release
 ## Usage
 
 ```bash
-# Run with defaults
-cargo run --release
+# If installed via cargo install:
+dla-simulation
+dla-simulation --particles 3000 --stickiness 0.5 --seed circle --speed 10
 
-# Custom parameters
+# If running from source:
+cargo run --release
 cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 10
 ```
 
@@ -113,19 +121,19 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 
 ```bash
 # Classic DLA with higher stickiness at tips (creates bushier growth)
-cargo run --release -- --tip-stickiness 1.0 --side-stickiness 0.3
+dla-simulation --tip-stickiness 1.0 --side-stickiness 0.3
 
 # Directional growth from top edge
-cargo run --release -- --spawn-mode top --walk-angle 270 --walk-force 0.2
+dla-simulation --spawn-mode top --walk-angle 270 --walk-force 0.2
 
 # Dense blob-like growth
-cargo run --release -- --neighborhood extended --multi-contact 2
+dla-simulation --neighborhood extended --multi-contact 2
 
 # Toroidal boundary with random spawning
-cargo run --release -- --boundary wrap --spawn-mode random
+dla-simulation --boundary wrap --spawn-mode random
 
 # Color by approach direction with inverted gradient
-cargo run --release -- --color-mode direction --invert
+dla-simulation --color-mode direction --invert
 ```
 
 ### Config Files
@@ -134,10 +142,10 @@ Export your current settings to a JSON file by pressing `Shift+X` while running.
 
 ```bash
 # Load settings from a config file
-cargo run --release -- --config my-settings.json
+dla-simulation --config my-settings.json
 
 # CLI args override config file values
-cargo run --release -- --config my-settings.json --particles 1000
+dla-simulation --config my-settings.json --particles 1000
 
 # Export: While running, press Shift+X, enter filename, press Enter
 ```
