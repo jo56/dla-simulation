@@ -136,7 +136,12 @@ fn run_app<B: ratatui::backend::Backend>(
                     // === Handle Shift+letter to open popup ===
                     if key.modifiers.contains(KeyModifiers::SHIFT) {
                         if let KeyCode::Char(c) = key.code {
-                            // Only open popup for letters (not symbols)
+                            // Shift+? opens all params popup
+                            if c == '?' {
+                                app.open_all_params_popup();
+                                continue;
+                            }
+                            // Shift+letter opens popup for that letter
                             if c.is_ascii_alphabetic() {
                                 app.open_param_popup(c);
                                 continue;
@@ -151,7 +156,7 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char(' ') => app.toggle_pause(),
                         KeyCode::Char('r') | KeyCode::Char('R') => app.reset(),
                         KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
-                        KeyCode::Char('h') | KeyCode::Char('H') | KeyCode::Char('?') => app.toggle_help(),
+                        KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
                         KeyCode::Char('1') => app.set_seed_pattern(SeedPattern::Point),
                         KeyCode::Char('2') => app.set_seed_pattern(SeedPattern::Line),
                         KeyCode::Char('3') => app.set_seed_pattern(SeedPattern::Cross),

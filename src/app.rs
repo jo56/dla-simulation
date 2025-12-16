@@ -439,6 +439,45 @@ impl App {
         }
     }
 
+    /// Get all parameters in alphabetical order
+    fn get_all_params() -> Vec<(Focus, &'static str)> {
+        vec![
+            (Focus::Age, "Age (Color by)"),
+            (Focus::Boundary, "Boundary"),
+            (Focus::ColorScheme, "Color Scheme"),
+            (Focus::Direction, "Direction"),
+            (Focus::EscapeMult, "Escape Multiplier"),
+            (Focus::Force, "Force (Bias Strength)"),
+            (Focus::StickyGradient, "Gradient (Stickiness)"),
+            (Focus::Highlight, "Highlight"),
+            (Focus::Invert, "Invert"),
+            (Focus::MaxIterations, "Max Iterations"),
+            (Focus::MinRadius, "Min Spawn Radius"),
+            (Focus::Mode, "Mode (Color)"),
+            (Focus::MultiContact, "Multi-Contact Min"),
+            (Focus::Neighborhood, "Neighborhood"),
+            (Focus::SpawnOffset, "Offset (Spawn)"),
+            (Focus::Particles, "Particles"),
+            (Focus::RadialBias, "Radial Bias"),
+            (Focus::Seed, "Seed Pattern"),
+            (Focus::SideSticky, "Side Stickiness"),
+            (Focus::Spawn, "Spawn Mode"),
+            (Focus::Speed, "Speed"),
+            (Focus::Stickiness, "Stickiness"),
+            (Focus::TipSticky, "Tip Stickiness"),
+            (Focus::WalkStep, "Walk Step"),
+        ]
+    }
+
+    /// Open popup with all parameters (Shift+?)
+    pub fn open_all_params_popup(&mut self) {
+        self.param_popup = Some(ParamPopup {
+            letter: '?',
+            options: Self::get_all_params(),
+            selected_idx: 0,
+        });
+    }
+
     /// Close the parameter popup without selecting
     pub fn close_param_popup(&mut self) {
         self.param_popup = None;

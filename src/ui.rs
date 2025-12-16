@@ -13,8 +13,8 @@ const SIDEBAR_WIDTH: u16 = 22;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 60;
 
-/// Number of lines in controls content
-pub const CONTROLS_CONTENT_LINES: u16 = 5;
+/// Number of lines in controls content (4 main + 17 Shift+letter hints)
+pub const CONTROLS_CONTENT_LINES: u16 = 21;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -75,7 +75,7 @@ pub fn get_canvas_size(frame_area: Rect, fullscreen: bool) -> (u16, u16) {
 pub fn get_controls_visible_lines(terminal_height: u16) -> u16 {
     const STATUS_HEIGHT: u16 = 5;
     const NAV_HEIGHT: u16 = 4;
-    const MIN_CONTROLS_VISIBLE: u16 = 3;
+    const MIN_CONTROLS_VISIBLE: u16 = 4;
     const BORDERS: u16 = 2;
 
     let fixed_height = STATUS_HEIGHT + NAV_HEIGHT;
@@ -101,7 +101,7 @@ fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
     // Fixed component heights
     const STATUS_HEIGHT: u16 = 5;
     const NAV_HEIGHT: u16 = 4;
-    const MIN_CONTROLS_VISIBLE: u16 = 3;
+    const MIN_CONTROLS_VISIBLE: u16 = 4;
     const BORDERS: u16 = 2;
 
     let fixed_height = STATUS_HEIGHT + NAV_HEIGHT;
@@ -192,11 +192,16 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
 fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
     let is_focused = app.focus.is_param();
     let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let title = if is_focused {
+        " Params (↑↓ adjust)"
+    } else {
+        " Params "
+    };
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(border_color))
-        .title(" Parameters ");
+        .title(title);
 
     let make_line = |label: &str, value: String, focused: bool| {
         let prefix = if focused { ">" } else { " " };
@@ -358,8 +363,9 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let key_style = Style::default().fg(HIGHLIGHT_COLOR);
     let desc_style = Style::default().fg(DIM_TEXT_COLOR);
 
-    // Compact system controls only
+    // Main controls (top 4 lines) + Shift+letter hints below
     let content = vec![
+        // Main controls
         Line::from(vec![
             Span::raw(" "),
             Span::styled("Spc", key_style),
@@ -371,7 +377,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::raw(" "),
             Span::styled("Q", key_style),
             Span::styled(" quit  ", desc_style),
-            Span::styled("H/?", key_style),
+            Span::styled("H", key_style),
             Span::styled(" help", desc_style),
         ]),
         Line::from(vec![
@@ -383,15 +389,94 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("+/-", key_style),
-            Span::styled(" speed ", desc_style),
-            Span::styled("[/]", key_style),
-            Span::styled(" hilit", desc_style),
+            Span::styled("Shift+?:", key_style),
+            Span::styled(" lookup", desc_style),
+        ]),
+        // Shift+letter hints (alphabetical)
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+A:", key_style),
+            Span::styled(" age", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("Shift+", key_style),
-            Span::styled("letter: params", desc_style),
+            Span::styled("Shift+B:", key_style),
+            Span::styled(" bound", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+C:", key_style),
+            Span::styled(" color", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+D:", key_style),
+            Span::styled(" dir", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+E:", key_style),
+            Span::styled(" escape", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+F:", key_style),
+            Span::styled(" force", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+G:", key_style),
+            Span::styled(" gradient", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+H:", key_style),
+            Span::styled(" hi-lt", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+I:", key_style),
+            Span::styled(" invert", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+M:", key_style),
+            Span::styled(" 4 options", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+N:", key_style),
+            Span::styled(" neighb", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+O:", key_style),
+            Span::styled(" offset", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+P:", key_style),
+            Span::styled(" particles", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+R:", key_style),
+            Span::styled(" radial", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+S:", key_style),
+            Span::styled(" 5 options", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+T:", key_style),
+            Span::styled(" tip", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+W:", key_style),
+            Span::styled(" walk", desc_style),
         ]),
     ];
 
