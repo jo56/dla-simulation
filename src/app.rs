@@ -143,7 +143,7 @@ impl App {
             color_lut: color_scheme.build_lut(),
             color_scheme,
             color_by_age: true,
-            focus: Focus::default(),
+            focus: Focus::Controls,
             fullscreen_mode: false,
             steps_per_frame: 5,
             show_help: false,

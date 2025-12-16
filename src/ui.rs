@@ -728,7 +728,7 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
         })
         .collect();
 
-    let title = format!(" Shift+{} ", popup.letter);
+    let title =  " Lookup ".to_string();
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Double)
