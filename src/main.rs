@@ -156,14 +156,22 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::BackTab => app.prev_focus(),
                         KeyCode::Up => {
                             if !app.show_help {
-                                app.adjust_focused_up();
-                                app.scroll_controls_up();
+                                if app.focus.is_param() {
+                                    app.adjust_focused_up();
+                                } else {
+                                    // When None or Controls, scroll controls box
+                                    app.scroll_controls_up();
+                                }
                             }
                         }
                         KeyCode::Down => {
                             if !app.show_help {
-                                app.adjust_focused_down();
-                                app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES);
+                                if app.focus.is_param() {
+                                    app.adjust_focused_down();
+                                } else {
+                                    // When None or Controls, scroll controls box
+                                    app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES);
+                                }
                             }
                         }
                         KeyCode::Char('+') | KeyCode::Char('=') => app.increase_speed(),

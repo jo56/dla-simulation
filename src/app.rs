@@ -12,29 +12,41 @@ pub enum Focus {
     Seed,
     ColorScheme,
     Speed,
+    // Advanced settings
+    Mode,
+    Neighborhood,
+    Boundary,
+    Spawn,
+    WalkStep,
+    Highlight,
+    Invert,
+    // Controls box
+    Controls,
 }
 
 impl Focus {
+    /// Tab cycles through parameters only
     pub fn next(&self) -> Focus {
         match self {
-            Focus::None => Focus::Stickiness,
+            Focus::None | Focus::Controls => Focus::Stickiness,
             Focus::Stickiness => Focus::Particles,
             Focus::Particles => Focus::Seed,
             Focus::Seed => Focus::ColorScheme,
             Focus::ColorScheme => Focus::Speed,
-            Focus::Speed => Focus::None,
+            Focus::Speed => Focus::Mode,
+            Focus::Mode => Focus::Neighborhood,
+            Focus::Neighborhood => Focus::Boundary,
+            Focus::Boundary => Focus::Spawn,
+            Focus::Spawn => Focus::WalkStep,
+            Focus::WalkStep => Focus::Highlight,
+            Focus::Highlight => Focus::Invert,
+            Focus::Invert => Focus::Stickiness,
         }
     }
 
-    pub fn prev(&self) -> Focus {
-        match self {
-            Focus::None => Focus::Speed,
-            Focus::Stickiness => Focus::None,
-            Focus::Particles => Focus::Stickiness,
-            Focus::Seed => Focus::Particles,
-            Focus::ColorScheme => Focus::Seed,
-            Focus::Speed => Focus::ColorScheme,
-        }
+    /// Shift+Tab exits to Controls mode
+    pub fn deselect(&self) -> Focus {
+        Focus::Controls
     }
 
     /// Get the line index in the parameters box for this focus
@@ -46,7 +58,20 @@ impl Focus {
             Focus::Seed => 2,
             Focus::ColorScheme => 3,
             Focus::Speed => 4,
+            Focus::Mode => 5,
+            Focus::Neighborhood => 6,
+            Focus::Boundary => 7,
+            Focus::Spawn => 8,
+            Focus::WalkStep => 9,
+            Focus::Highlight => 10,
+            Focus::Invert => 11,
+            Focus::Controls => 0, // Not in params box
         }
+    }
+
+    /// Check if focus is on a parameter (not Controls or None)
+    pub fn is_param(&self) -> bool {
+        !matches!(self, Focus::None | Focus::Controls)
     }
 }
 
@@ -96,7 +121,7 @@ impl App {
     /// Handle adjusting the currently focused parameter
     pub fn adjust_focused_up(&mut self) {
         match self.focus {
-            Focus::None => {}
+            Focus::None | Focus::Controls => {}
             Focus::Stickiness => self.simulation.adjust_stickiness(0.05),
             Focus::Particles => self.simulation.adjust_particles(500),
             Focus::Seed => {
@@ -108,13 +133,20 @@ impl App {
                 self.color_lut = self.color_scheme.build_lut();
             }
             Focus::Speed => self.steps_per_frame = (self.steps_per_frame + 1).min(50),
+            Focus::Mode => self.cycle_color_mode(),
+            Focus::Neighborhood => self.cycle_neighborhood(),
+            Focus::Boundary => self.cycle_boundary(),
+            Focus::Spawn => self.cycle_spawn_mode(),
+            Focus::WalkStep => self.adjust_walk_step(0.5),
+            Focus::Highlight => self.adjust_highlight(5),
+            Focus::Invert => self.toggle_invert_colors(),
         }
     }
 
     /// Handle adjusting the currently focused parameter
     pub fn adjust_focused_down(&mut self) {
         match self.focus {
-            Focus::None => {}
+            Focus::None | Focus::Controls => {}
             Focus::Stickiness => self.simulation.adjust_stickiness(-0.05),
             Focus::Particles => self.simulation.adjust_particles(-500),
             Focus::Seed => {
@@ -126,6 +158,13 @@ impl App {
                 self.color_lut = self.color_scheme.build_lut();
             }
             Focus::Speed => self.steps_per_frame = (self.steps_per_frame.saturating_sub(1)).max(1),
+            Focus::Mode => self.cycle_color_mode_prev(),
+            Focus::Neighborhood => self.cycle_neighborhood_prev(),
+            Focus::Boundary => self.cycle_boundary_prev(),
+            Focus::Spawn => self.cycle_spawn_mode_prev(),
+            Focus::WalkStep => self.adjust_walk_step(-0.5),
+            Focus::Highlight => self.adjust_highlight(-5),
+            Focus::Invert => self.toggle_invert_colors(),
         }
     }
 
@@ -134,9 +173,9 @@ impl App {
         self.focus = self.focus.next();
     }
 
-    /// Cycle to previous focus
+    /// Exit to Controls mode (Shift+Tab)
     pub fn prev_focus(&mut self) {
-        self.focus = self.focus.prev();
+        self.focus = self.focus.deselect();
     }
 
     /// Toggle pause state
@@ -249,5 +288,25 @@ impl App {
     /// Adjust highlight recent count
     pub fn adjust_highlight(&mut self, delta: i32) {
         self.simulation.settings.adjust_highlight_recent(delta);
+    }
+
+    /// Cycle color mode backward
+    pub fn cycle_color_mode_prev(&mut self) {
+        self.simulation.settings.color_mode = self.simulation.settings.color_mode.prev();
+    }
+
+    /// Cycle neighborhood backward
+    pub fn cycle_neighborhood_prev(&mut self) {
+        self.simulation.settings.neighborhood = self.simulation.settings.neighborhood.prev();
+    }
+
+    /// Cycle boundary backward
+    pub fn cycle_boundary_prev(&mut self) {
+        self.simulation.settings.boundary_behavior = self.simulation.settings.boundary_behavior.prev();
+    }
+
+    /// Cycle spawn mode backward
+    pub fn cycle_spawn_mode_prev(&mut self) {
+        self.simulation.settings.spawn_mode = self.simulation.settings.spawn_mode.prev();
     }
 }

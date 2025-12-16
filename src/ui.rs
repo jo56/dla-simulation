@@ -14,7 +14,7 @@ const SIDEBAR_WIDTH: u16 = 22;
 pub const HELP_CONTENT_LINES: u16 = 60;
 
 /// Number of lines in controls content
-pub const CONTROLS_CONTENT_LINES: u16 = 15;
+pub const CONTROLS_CONTENT_LINES: u16 = 8;
 
 // UI color scheme
 const BORDER_COLOR: Color = Color::Cyan;
@@ -64,12 +64,18 @@ pub fn get_canvas_size(frame_area: Rect, fullscreen: bool) -> (u16, u16) {
 }
 
 fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
+    // Calculate remaining height after status box
+    let remaining = area.height.saturating_sub(5);
+    // Split remaining space: ~60% to params, ~40% to controls (params has more content typically visible)
+    let params_height = (remaining * 3 / 5).max(4);
+    let controls_height = remaining.saturating_sub(params_height).max(3);
+
     let sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(5),  // Status
-            Constraint::Length(10), // Parameters (added extra line)
-            Constraint::Min(10),    // Controls
+            Constraint::Length(5),              // Status - fixed
+            Constraint::Length(params_height),  // Parameters - proportional
+            Constraint::Length(controls_height), // Controls - proportional
         ])
         .split(area);
 
@@ -121,7 +127,13 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = styled_block(" Parameters ");
+    let is_focused = app.focus.is_param();
+    let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(border_color))
+        .title(" Parameters ");
 
     let make_line = |label: &str, value: String, focused: bool| {
         let prefix = if focused { "> " } else { "  " };
@@ -137,38 +149,65 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
 
     let content = vec![
         make_line(
-            "Sticky",
+            "sticky",
             format!("{:.2}", app.simulation.stickiness),
             app.focus == Focus::Stickiness,
         ),
         make_line(
-            "Particles",
+            "particles",
             format!("{}", app.simulation.num_particles),
             app.focus == Focus::Particles,
         ),
         make_line(
-            "Seed",
-            app.simulation.seed_pattern.name().to_string(),
+            "seed",
+            app.simulation.seed_pattern.name().to_lowercase(),
             app.focus == Focus::Seed,
         ),
         make_line(
-            "Color",
-            app.color_scheme.name().to_string(),
+            "color",
+            app.color_scheme.name().to_lowercase(),
             app.focus == Focus::ColorScheme,
         ),
         make_line(
-            "Speed",
+            "speed",
             format!("{}", app.steps_per_frame),
             app.focus == Focus::Speed,
         ),
-        Line::from(Span::styled(
-            format!("  Mode: {}", settings.color_mode.name()),
-            Style::default().fg(DIM_TEXT_COLOR),
-        )),
-        Line::from(Span::styled(
-            format!("  Step: {:.1}", settings.walk_step_size),
-            Style::default().fg(DIM_TEXT_COLOR),
-        )),
+        make_line(
+            "mode",
+            settings.color_mode.name().to_lowercase(),
+            app.focus == Focus::Mode,
+        ),
+        make_line(
+            "neigh",
+            settings.neighborhood.short_name().to_lowercase(),
+            app.focus == Focus::Neighborhood,
+        ),
+        make_line(
+            "bound",
+            settings.boundary_behavior.name().to_lowercase(),
+            app.focus == Focus::Boundary,
+        ),
+        make_line(
+            "spawn",
+            settings.spawn_mode.name().to_lowercase(),
+            app.focus == Focus::Spawn,
+        ),
+        make_line(
+            "step",
+            format!("{:.1}", settings.walk_step_size),
+            app.focus == Focus::WalkStep,
+        ),
+        make_line(
+            "hi-lt",
+            format!("{}", settings.highlight_recent),
+            app.focus == Focus::Highlight,
+        ),
+        make_line(
+            "invert",
+            if settings.invert_colors { "on" } else { "off" }.to_string(),
+            app.focus == Focus::Invert,
+        ),
     ];
 
     // Calculate scroll to keep focused item visible based on actual area
@@ -195,47 +234,88 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let key_style = Style::default().fg(HIGHLIGHT_COLOR);
     let desc_style = Style::default().fg(DIM_TEXT_COLOR);
 
-    let settings = &app.simulation.settings;
-
-    // Helper to create a control line
-    let make_control = |key: &str, desc: String| -> Line<'_> {
-        Line::from(vec![
-            Span::styled(format!("{:>5}", key), key_style),
-            Span::styled(format!(" {}", desc), desc_style),
-        ])
-    };
-
+    // Compact format with 1-space indent, each line ≤ 19 chars content
     let content = vec![
-        make_control("Space", "pause/resume".to_string()),
-        make_control("H/?", "help".to_string()),
-        make_control("R", "reset".to_string()),
-        make_control("1-0", "seed patterns".to_string()),
-        make_control("C", "color scheme".to_string()),
-        make_control("A", "color-by-age".to_string()),
-        make_control("V", "fullscreen".to_string()),
-        make_control("M", format!("mode: {}", settings.color_mode.name())),
-        make_control("N", format!("{}", settings.neighborhood.short_name())),
-        make_control("B", format!("{}", settings.boundary_behavior.name())),
-        make_control("S", format!("{}", settings.spawn_mode.name())),
-        make_control("W/E", format!("step: {:.1}", settings.walk_step_size)),
-        make_control("[/]", "highlight recent".to_string()),
-        make_control("I", "invert colors".to_string()),
-        make_control("+/-", "speed".to_string()),
-        make_control("Q", "quit".to_string()),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Spc", key_style),
+            Span::styled(" pause ", desc_style),
+            Span::styled("R", key_style),
+            Span::styled(" reset", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Q", key_style),
+            Span::styled(" quit ", desc_style),
+            Span::styled("H/?", key_style),
+            Span::styled(" help", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("V", key_style),
+            Span::styled(" full ", desc_style),
+            Span::styled("1-0", key_style),
+            Span::styled(" seeds", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("C", key_style),
+            Span::styled(" color ", desc_style),
+            Span::styled("A", key_style),
+            Span::styled(" age", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("M", key_style),
+            Span::styled(" mode ", desc_style),
+            Span::styled("I", key_style),
+            Span::styled(" invert", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("N", key_style),
+            Span::styled(" neigh ", desc_style),
+            Span::styled("B", key_style),
+            Span::styled(" bound", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("S", key_style),
+            Span::styled(" spawn ", desc_style),
+            Span::styled("W/E", key_style),
+            Span::styled(" step", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("+/-", key_style),
+            Span::styled(" spd ", desc_style),
+            Span::styled("[/]", key_style),
+            Span::styled(" hi-lt", desc_style),
+        ]),
     ];
 
     let content_height = content.len() as u16;
     let visible_height = area.height.saturating_sub(2); // minus borders
     let max_scroll = content_height.saturating_sub(visible_height);
     let is_scrollable = max_scroll > 0;
+    let is_focused = app.focus == Focus::Controls;
 
-    let title = if is_scrollable {
+    let title = if is_focused && is_scrollable {
+        " Controls (↑↓) "
+    } else if is_focused {
+        " Controls "
+    } else if is_scrollable {
         " Controls (↑↓) "
     } else {
         " Controls "
     };
 
-    let block = styled_block(title);
+    let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(border_color))
+        .title(title);
 
     let paragraph = Paragraph::new(content)
         .block(block)
