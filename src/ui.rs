@@ -16,6 +16,9 @@ pub const HELP_CONTENT_LINES: u16 = 60;
 /// Number of lines in controls content
 pub const CONTROLS_CONTENT_LINES: u16 = 8;
 
+/// Number of lines in parameters content
+pub const PARAMS_CONTENT_LINES: u16 = 12;
+
 // UI color scheme
 const BORDER_COLOR: Color = Color::Cyan;
 const HIGHLIGHT_COLOR: Color = Color::Yellow;
@@ -63,19 +66,73 @@ pub fn get_canvas_size(frame_area: Rect, fullscreen: bool) -> (u16, u16) {
     }
 }
 
+/// Calculate the number of visible lines in the controls box based on terminal height
+pub fn get_controls_visible_lines(terminal_height: u16) -> u16 {
+    const STATUS_HEIGHT: u16 = 5;
+    const NAV_HEIGHT: u16 = 4;
+    const MIN_CONTROLS_VISIBLE: u16 = 3;
+    const BORDERS: u16 = 2;
+
+    let fixed_height = STATUS_HEIGHT + NAV_HEIGHT;
+    let available = terminal_height.saturating_sub(fixed_height);
+
+    let params_ideal = PARAMS_CONTENT_LINES + BORDERS; // 14
+    let controls_min = MIN_CONTROLS_VISIBLE + BORDERS; // 5
+    let controls_max = CONTROLS_CONTENT_LINES + BORDERS; // 10
+
+    let controls_height = if available < params_ideal + controls_min {
+        controls_min.min(available)
+    } else {
+        let extra = available - params_ideal - controls_min;
+        let controls_extra = extra.min(controls_max - controls_min);
+        controls_min + controls_extra
+    };
+
+    // Visible lines = height - borders
+    controls_height.saturating_sub(BORDERS)
+}
+
 fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
-    // Fixed heights: status=5, controls=5 (3 lines + 2 borders), nav=4
-    // Params gets all remaining space
-    let fixed_height = 5 + 5 + 4; // status + controls + nav
-    let params_height = area.height.saturating_sub(fixed_height).max(4);
+    // Fixed component heights
+    const STATUS_HEIGHT: u16 = 5;
+    const NAV_HEIGHT: u16 = 4;
+    const MIN_CONTROLS_VISIBLE: u16 = 3;
+    const BORDERS: u16 = 2;
+
+    let fixed_height = STATUS_HEIGHT + NAV_HEIGHT;
+    let available = area.height.saturating_sub(fixed_height);
+
+    // Calculate ideal heights (content + borders)
+    let params_ideal = PARAMS_CONTENT_LINES + BORDERS; // 14
+    let controls_min = MIN_CONTROLS_VISIBLE + BORDERS; // 5
+    let controls_max = CONTROLS_CONTENT_LINES + BORDERS; // 10
+
+    // Allocate space with priority:
+    // 1. Parameters needs its content (no whitespace) - up to 14
+    // 2. Controls expands from 3 to 8 visible lines
+    // 3. Remaining whitespace goes to Parameters
+    let (params_height, controls_height) = if available < params_ideal + controls_min {
+        // Not enough space - give controls its minimum, params gets the rest
+        let controls_h = controls_min.min(available);
+        let params_h = available.saturating_sub(controls_h).max(4);
+        (params_h, controls_h)
+    } else {
+        // Enough for params ideal + controls min, see how much extra we have
+        let extra = available - params_ideal - controls_min;
+        // Controls gets extra up to its max (8 visible lines)
+        let controls_extra = extra.min(controls_max - controls_min);
+        // Any remainder goes to params as whitespace
+        let params_extra = extra.saturating_sub(controls_extra);
+        (params_ideal + params_extra, controls_min + controls_extra)
+    };
 
     let sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(5),              // Status - fixed
-            Constraint::Length(params_height),  // Parameters - gets remaining space
-            Constraint::Length(5),              // Controls - fixed (3 lines + 2 borders)
-            Constraint::Length(4),              // Nav - fixed
+            Constraint::Length(STATUS_HEIGHT),   // Status - fixed
+            Constraint::Length(params_height),   // Parameters - dynamic
+            Constraint::Length(controls_height), // Controls - dynamic (3-8 visible lines)
+            Constraint::Length(NAV_HEIGHT),      // Nav - fixed
         ])
         .split(area);
 
@@ -260,15 +317,15 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
+            Span::styled("+/-", key_style),
+            Span::styled(" speed", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
             Span::styled("C", key_style),
             Span::styled(" colors ", desc_style),
             Span::styled("A", key_style),
             Span::styled(" age", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("+/-", key_style),
-            Span::styled(" speed", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
