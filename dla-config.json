@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "settings": {
+    "walk_step_size": 2.0,
+    "walk_bias_angle": 150.0,
+    "walk_bias_strength": 0.0,
+    "radial_bias": 0.0,
+    "neighborhood": "Moore",
+    "multi_contact_min": 1,
+    "tip_stickiness": 1.0,
+    "side_stickiness": 1.0,
+    "stickiness_gradient": 0.0,
+    "spawn_mode": "Circle",
+    "boundary_behavior": "Bounce",
+    "spawn_radius_offset": 10.0,
+    "escape_multiplier": 6.0,
+    "min_spawn_radius": 50.0,
+    "max_walk_iterations": 11000,
+    "color_mode": "Age",
+    "highlight_recent": 50,
+    "invert_colors": true
+  },
+  "seed_pattern": "Point",
+  "stickiness": 1.0,
+  "num_particles": 3718,
+  "color_scheme": "Viridis",
+  "steps_per_frame": 5,
+  "color_by_age": false
+}

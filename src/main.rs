@@ -407,6 +407,11 @@ fn run_app<B: ratatui::backend::Backend>(
                                 app.open_all_params_popup();
                                 continue;
                             }
+                            // Shift+X opens export popup
+                            if c == 'X' || c == 'x' {
+                                app.open_export_popup();
+                                continue;
+                            }
                             // Shift+letter opens popup for that letter
                             if c.is_ascii_alphabetic() {
                                 app.open_param_popup(c);
@@ -423,7 +428,6 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('r') | KeyCode::Char('R') => app.reset(),
                         KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
                         KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
-                        KeyCode::Char('x') | KeyCode::Char('X') => app.open_export_popup(),
                         KeyCode::Char('1') => app.set_seed_pattern(SeedPattern::Point),
                         KeyCode::Char('2') => app.set_seed_pattern(SeedPattern::Line),
                         KeyCode::Char('3') => app.set_seed_pattern(SeedPattern::Cross),

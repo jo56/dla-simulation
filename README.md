@@ -22,6 +22,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 - **8 color schemes** - Ice, Fire, Plasma, Viridis, Rainbow, Grayscale, Ocean, Neon
 - **Parameter popup** - Quick access to any parameter via Shift+letter
 - **Fullscreen mode** - Hide sidebar for maximum canvas size
+- **Config export/import** - Save and load settings as JSON files
 
 ## Installation
 
@@ -53,6 +54,12 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 ```
 
 ### Command Line Options
+
+#### Config File
+
+| Option | Description |
+|--------|-------------|
+| `--config <FILE>` | Load settings from a JSON config file. CLI args override config values. |
 
 #### Basic Options
 
@@ -120,6 +127,22 @@ cargo run --release -- --boundary wrap --spawn-mode random
 cargo run --release -- --color-mode direction --invert
 ```
 
+### Config Files
+
+Export your current settings to a JSON file by pressing `Shift+X` while running. Load settings from a config file using `--config`:
+
+```bash
+# Load settings from a config file
+cargo run --release -- --config my-settings.json
+
+# CLI args override config file values
+cargo run --release -- --config my-settings.json --particles 1000
+
+# Export: While running, press Shift+X, enter filename, press Enter
+```
+
+Config files store all simulation parameters in JSON format and can be edited manually or shared with others.
+
 ## Controls
 
 ### Navigation & System
@@ -132,6 +155,7 @@ cargo run --release -- --color-mode direction --invert
 | `Shift+Tab` | Previous parameter |
 | `Up/Down` | Adjust focused parameter |
 | `V` | Toggle fullscreen |
+| `Shift+X` | Export config to file |
 | `H` or `?` | Show help |
 | `Q` | Quit |
 
