@@ -59,7 +59,7 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 | `-p, --particles` | Number of particles (100-10000) | 5000 |
 | `-s, --stickiness` | Adhesion probability (0.1-1.0) | 1.0 |
 | `--seed` | Seed pattern (point, line, cross, circle, ring, block, noise, scatter, multipoint, starburst) | point |
-| `--speed` | Steps per frame (1-20) | 5 |
+| `--speed` | Steps per frame (1-50) | 5 |
 
 ## Controls
 
@@ -175,7 +175,7 @@ Control how the simulation is displayed.
 | Parameter | Range | Default | Description |
 |-----------|-------|---------|-------------|
 | Particles | 100-10000 | 5000 | Total number of particles |
-| Speed | 1-20 | 5 | Simulation steps per frame |
+| Speed | 1-50 | 5 | Simulation steps per frame |
 | Color Scheme | 8 options | Ice | Color palette |
 | Color Mode | Age/Distance/Density/Direction | Age | What property determines color |
 | Color by Age | on/off | on | Enable color gradient |

@@ -662,7 +662,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("VISUAL PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
         Line::from(""),
         Line::from("Particles (100-10000) - Total count"),
-        Line::from("Speed (1-20) - Steps per frame"),
+        Line::from("Speed (1-50) - Steps per frame"),
         Line::from("Color - 8 schemes, 4 modes"),
         Line::from("Highlight (0-50) - Recent particles in white"),
         Line::from(""),
