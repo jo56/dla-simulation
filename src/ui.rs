@@ -11,10 +11,10 @@ use ratatui::{
 const SIDEBAR_WIDTH: u16 = 22;
 
 /// Max scroll for help content (generous to account for text wrapping on small screens)
-pub const HELP_CONTENT_LINES: u16 = 70;
+pub const HELP_CONTENT_LINES: u16 = 71;
 
-/// Number of lines in controls content (5 main + 18 Shift+letter hints)
-pub const CONTROLS_CONTENT_LINES: u16 = 23;
+/// Number of lines in controls content (5 main + 18 Shift+letter hints + 1 record)
+pub const CONTROLS_CONTENT_LINES: u16 = 24;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -504,6 +504,11 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("Shift+W:", key_style),
             Span::styled(" walk", desc_style),
         ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("`:", key_style),
+            Span::styled(" record", desc_style),
+        ]),
     ];
 
     let is_focused = app.focus == Focus::Controls;
@@ -633,6 +638,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Up/Down - Adjust value / scroll", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("V - Toggle fullscreen", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("` - Start/stop recording", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Shift+X - Export config to file", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Q - Quit", Style::default().fg(TEXT_COLOR))),
         Line::from(""),

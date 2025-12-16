@@ -23,6 +23,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 - **Parameter popup** - Quick access to any parameter via Shift+letter
 - **Fullscreen mode** - Hide sidebar for maximum canvas size
 - **Config export/import** - Save and load settings as JSON files
+- **Video recording** - Capture simulations as MP4, WebM, or GIF files
 
 ## Installation
 
@@ -143,6 +144,25 @@ cargo run --release -- --config my-settings.json --particles 1000
 
 Config files store all simulation parameters in JSON format and can be edited manually or shared with others.
 
+### Recording
+
+Capture your simulation as a video file:
+
+1. Press `` ` `` (backtick) to open the recording dialog (simulation pauses)
+2. Enter a filename (default: `dla_recording.mp4`)
+3. Press `Enter` to start recording (simulation resumes)
+4. Press `` ` `` again to stop and save the recording
+
+**Supported formats:**
+
+| Extension | Encoder | Notes |
+|-----------|---------|-------|
+| `.mp4` | FFmpeg (H.264) | Best quality, requires [FFmpeg](https://ffmpeg.org/) installed |
+| `.webm` | FFmpeg (VP9) | Web-friendly, requires FFmpeg |
+| `.gif` | Native Rust | No dependencies, 256 color limit |
+
+If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will automatically fall back to GIF format.
+
 ## Controls
 
 ### Navigation & System
@@ -155,6 +175,7 @@ Config files store all simulation parameters in JSON format and can be edited ma
 | `Shift+Tab` | Previous parameter |
 | `Up/Down` | Adjust value / scroll |
 | `V` | Toggle fullscreen |
+| `` ` `` | Start/stop recording |
 | `Shift+X` | Export config to file |
 | `H` | Show help (Up/Down to scroll) |
 | `Q` | Quit |
@@ -298,6 +319,8 @@ Press number keys 1-0 to quickly select:
 - [clap](https://github.com/clap-rs/clap) - Command line argument parsing
 - [serde](https://github.com/serde-rs/serde) - Serialization framework
 - [dirs](https://github.com/dirs-dev/dirs-rs) - Platform directory paths
+- [image](https://github.com/image-rs/image) - Image processing for video frames
+- [gif](https://github.com/image-rs/image-gif) - GIF encoding
 
 ## License
 
