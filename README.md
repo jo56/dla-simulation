@@ -153,7 +153,7 @@ Config files store all simulation parameters in JSON format and can be edited ma
 | `R` | Reset simulation |
 | `Tab` | Next parameter |
 | `Shift+Tab` | Previous parameter |
-| `Up/Down` | Adjust focused parameter |
+| `Up/Down` | Adjust value / scroll |
 | `V` | Toggle fullscreen |
 | `Shift+X` | Export config to file |
 | `H` or `?` | Show help (Up/Down to scroll) |

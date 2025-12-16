@@ -625,7 +625,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("R - Reset simulation", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Tab - Next parameter", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Up/Down - Adjust parameter", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Up/Down - Adjust value / scroll", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("V - Toggle fullscreen", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Shift+X - Export config to file", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Q - Quit", Style::default().fg(TEXT_COLOR))),
