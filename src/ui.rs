@@ -66,9 +66,9 @@ pub fn get_canvas_size(frame_area: Rect, fullscreen: bool) -> (u16, u16) {
 fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
     // Calculate remaining height after status box
     let remaining = area.height.saturating_sub(5);
-    // Split remaining space: ~60% to params, ~40% to controls (params has more content typically visible)
-    let params_height = (remaining * 3 / 5).max(4);
-    let controls_height = remaining.saturating_sub(params_height).max(3);
+    // Split remaining space: 50/50 between params and controls
+    let params_height = (remaining / 2).max(4);
+    let controls_height = remaining.saturating_sub(params_height).max(5);
 
     let sections = Layout::default()
         .direction(Direction::Vertical)
@@ -136,7 +136,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         .title(" Parameters ");
 
     let make_line = |label: &str, value: String, focused: bool| {
-        let prefix = if focused { "> " } else { "  " };
+        let prefix = if focused { ">" } else { " " };
         let style = if focused {
             Style::default().fg(HIGHLIGHT_COLOR)
         } else {
@@ -234,7 +234,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let key_style = Style::default().fg(HIGHLIGHT_COLOR);
     let desc_style = Style::default().fg(DIM_TEXT_COLOR);
 
-    // Compact format with 1-space indent, each line ≤ 19 chars content
+    // Compact format with 1-space indent to align with settings box
     let content = vec![
         Line::from(vec![
             Span::raw(" "),
@@ -256,20 +256,23 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled(" window ", desc_style),
             Span::styled("1-0", key_style),
             Span::styled(" seeds", desc_style),
-        ])
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Tab", key_style),
+            Span::styled(" Parameters", desc_style),
+        ]),
+        
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Esc", key_style),
+            Span::styled(" Controls", desc_style),
+        ]),
     ];
 
-    let content_height = content.len() as u16;
-    let visible_height = area.height.saturating_sub(2); // minus borders
-    let max_scroll = content_height.saturating_sub(visible_height);
-    let is_scrollable = max_scroll > 0;
     let is_focused = app.focus == Focus::Controls;
 
-    let title = if is_focused && is_scrollable {
-        " Controls (↑↓) "
-    } else if is_focused {
-        " Controls "
-    } else if is_scrollable {
+    let title = if is_focused {
         " Controls (↑↓) "
     } else {
         " Controls "
@@ -359,6 +362,35 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(""),
         Line::from("Particles randomly walk until they touch and stick to the growing structure, creating fractal patterns."),
         Line::from(""),
+        Line::from(Span::styled("BASIC CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("Space - Pause/Resume", Style::default().fg(TEXT_COLOR))),
+        Line::from("Toggle simulation playback"),
+        Line::from(""),
+        Line::from(Span::styled("R - Reset", Style::default().fg(TEXT_COLOR))),
+        Line::from("Restart simulation with current settings"),
+        Line::from(""),
+        Line::from(Span::styled("C - Color Scheme", Style::default().fg(TEXT_COLOR))),
+        Line::from("Cycle through available color palettes"),
+        Line::from(""),
+        Line::from(Span::styled("A - Color by Age", Style::default().fg(TEXT_COLOR))),
+        Line::from("Toggle age-based coloring mode"),
+        Line::from(""),
+        Line::from(Span::styled("V - Fullscreen", Style::default().fg(TEXT_COLOR))),
+        Line::from("Toggle between windowed and fullscreen view"),
+        Line::from(""),
+        Line::from(Span::styled("Tab/Arrows - Navigate", Style::default().fg(TEXT_COLOR))),
+        Line::from("Move between parameters and adjust values"),
+        Line::from(""),
+        Line::from(Span::styled("Shift+Tab - Exit Settings", Style::default().fg(TEXT_COLOR))),
+        Line::from("Return focus to main controls"),
+        Line::from(""),
+        Line::from(Span::styled("+/- - Speed", Style::default().fg(TEXT_COLOR))),
+        Line::from("Increase or decrease simulation speed"),
+        Line::from(""),
+        Line::from(Span::styled("Q - Quit", Style::default().fg(TEXT_COLOR))),
+        Line::from("Exit the application"),
+        Line::from(""),
         Line::from(Span::styled("SEED PATTERNS (1-0):", Style::default().fg(HIGHLIGHT_COLOR))),
         Line::from("1=Point, 2=Line, 3=Cross, 4=Circle, 5=Ring, 6=Block, 7=Multi, 8=Starburst, 9=Noise, 0=Scatter"),
         Line::from(""),
@@ -384,9 +416,6 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("I - Invert Colors", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("[/] - Highlight Recent", Style::default().fg(TEXT_COLOR))),
         Line::from("Show newest particles in white"),
-        Line::from(""),
-        Line::from(Span::styled("BASIC CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
-        Line::from("Space=Pause, R=Reset, C=Colors, A=Color-by-age, V=Fullscreen, Tab/Arrows=Adjust, +/-=Speed, Q=Quit"),
         Line::from(""),
     ];
 

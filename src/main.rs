@@ -6,7 +6,7 @@ mod settings;
 mod simulation;
 mod ui;
 
-use app::App;
+use app::{App, Focus};
 use clap::Parser;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
@@ -179,6 +179,8 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Esc => {
                             if app.show_help {
                                 app.toggle_help();
+                            } else if app.focus.is_param() {
+                                app.focus = Focus::Controls;
                             }
                         }
                         KeyCode::Char('j') | KeyCode::Char('J') => {
