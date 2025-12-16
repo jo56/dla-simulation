@@ -68,6 +68,16 @@ pub fn render(frame: &mut Frame, app: &App) {
     if let Some(result) = &app.export_result {
         render_export_result(frame, area, result);
     }
+
+    // Render recording popup if open (overlays everything)
+    if let Some(popup) = &app.recording_popup {
+        render_recording_popup(frame, area, popup);
+    }
+
+    // Render recording result toast if present
+    if let Some(result) = &app.recording_result {
+        render_recording_result(frame, area, result);
+    }
 }
 
 /// Calculate the canvas size (excluding borders)
@@ -165,20 +175,16 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
     let filled = (progress * progress_width as f32) as usize;
     let empty = progress_width.saturating_sub(filled);
 
-    let status_text = if app.simulation.paused {
-        "PAUSED"
+    // Recording indicator takes priority, then simulation status
+    let (status_text, status_color) = if app.is_recording() {
+        let frame_count = app.recorder.frame_count().unwrap_or(0);
+        (format!("REC {}", frame_count), Color::Red)
+    } else if app.simulation.paused {
+        ("PAUSED".to_string(), HIGHLIGHT_COLOR)
     } else if app.simulation.is_complete() {
-        "COMPLETE"
+        ("COMPLETE".to_string(), Color::Green)
     } else {
-        "RUNNING"
-    };
-
-    let status_color = if app.simulation.paused {
-        HIGHLIGHT_COLOR
-    } else if app.simulation.is_complete() {
-        Color::Green
-    } else {
-        BORDER_COLOR
+        ("RUNNING".to_string(), BORDER_COLOR)
     };
 
     let content = vec![
@@ -835,6 +841,92 @@ fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, S
     };
 
     let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4));
+    let popup_x = area.x + (area.width.saturating_sub(msg_width)) / 2;
+    let popup_y = area.y + area.height.saturating_sub(5);
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: msg_width,
+        height: 3,
+    };
+
+    frame.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(color));
+
+    let paragraph = Paragraph::new(Line::from(Span::styled(
+        message,
+        Style::default().fg(color),
+    )))
+    .block(block)
+    .alignment(Alignment::Center);
+
+    frame.render_widget(paragraph, popup_area);
+}
+
+/// Render text input popup for recording filename
+fn render_recording_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup) {
+    let popup_width = 44.min(area.width.saturating_sub(4));
+    let popup_height = 6;
+
+    let popup_x = area.x + (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = area.y + (area.height.saturating_sub(popup_height)) / 2;
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+
+    frame.render_widget(Clear, popup_area);
+
+    // Build input line with cursor
+    let (before_cursor, after_cursor) = popup.input.split_at(popup.cursor_pos);
+    let content = vec![
+        Line::from(vec![
+            Span::styled(before_cursor, Style::default().fg(TEXT_COLOR)),
+            Span::styled(
+                "_",
+                Style::default()
+                    .fg(HIGHLIGHT_COLOR)
+                    .add_modifier(Modifier::SLOW_BLINK),
+            ),
+            Span::styled(after_cursor, Style::default().fg(TEXT_COLOR)),
+        ]),
+        Line::from(""),
+        Line::from(Span::styled(
+            ".mp4/.webm (FFmpeg) or .gif",
+            Style::default().fg(DIM_TEXT_COLOR),
+        )),
+        Line::from(Span::styled(
+            "Enter: start | Esc: cancel",
+            Style::default().fg(DIM_TEXT_COLOR),
+        )),
+    ];
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(Color::Red))
+        .title(popup.title);
+
+    let paragraph = Paragraph::new(content).block(block);
+    frame.render_widget(paragraph, popup_area);
+}
+
+/// Render recording result toast (success or error message)
+fn render_recording_result(frame: &mut Frame, area: Rect, result: &Result<String, String>) {
+    let (message, color) = match result {
+        Ok(msg) => (msg.clone(), Color::Green),
+        Err(e) => (format!("Error: {}", e), Color::Red),
+    };
+
+    let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4)).max(20);
     let popup_x = area.x + (area.width.saturating_sub(msg_width)) / 2;
     let popup_y = area.y + area.height.saturating_sub(5);
 

@@ -67,8 +67,14 @@ impl ColorScheme {
 
     /// Map a value from 0.0-1.0 to a terminal color
     pub fn map(&self, t: f32) -> Color {
+        let (r, g, b) = self.map_rgb(t);
+        Color::Rgb(r, g, b)
+    }
+
+    /// Map a value from 0.0-1.0 to raw RGB values (for video recording)
+    pub fn map_rgb(&self, t: f32) -> (u8, u8, u8) {
         let t = t.clamp(0.0, 1.0);
-        let (r, g, b) = match self {
+        match self {
             ColorScheme::Ice => Self::ice_gradient(t),
             ColorScheme::Fire => Self::fire_gradient(t),
             ColorScheme::Plasma => Self::plasma_gradient(t),
@@ -77,8 +83,7 @@ impl ColorScheme {
             ColorScheme::Grayscale => Self::grayscale_gradient(t),
             ColorScheme::Ocean => Self::ocean_gradient(t),
             ColorScheme::Neon => Self::neon_gradient(t),
-        };
-        Color::Rgb(r, g, b)
+        }
     }
 
     /// Build a 256-entry lookup table for fast color access
