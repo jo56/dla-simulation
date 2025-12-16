@@ -1,6 +1,7 @@
 use crate::braille;
 use crate::color::{ColorLut, ColorScheme};
 use crate::config::AppConfig;
+use crate::recorder::Recorder;
 use crate::simulation::{DlaSimulation, SeedPattern};
 use std::path::Path;
 
@@ -201,6 +202,12 @@ pub struct App {
     pub param_popup: Option<ParamPopup>,
     pub export_popup: Option<TextInputPopup>,
     pub export_result: Option<Result<String, String>>,
+    // Recording state
+    pub recorder: Recorder,
+    pub recording_popup: Option<TextInputPopup>,
+    pub recording_result: Option<Result<String, String>>,
+    /// Tracks if simulation was paused before opening recording popup
+    pub recording_was_paused: bool,
 }
 
 impl App {
@@ -221,6 +228,10 @@ impl App {
             param_popup: None,
             export_popup: None,
             export_result: None,
+            recorder: Recorder::new(),
+            recording_popup: None,
+            recording_result: None,
+            recording_was_paused: false,
         }
     }
 
@@ -635,5 +646,71 @@ impl App {
         self.color_lut = self.color_scheme.build_lut();
         self.steps_per_frame = config.steps_per_frame;
         self.color_by_age = config.color_by_age;
+    }
+
+    // === Recording methods ===
+
+    /// Check if currently recording
+    pub fn is_recording(&self) -> bool {
+        self.recorder.is_recording()
+    }
+
+    /// Open recording popup with default filename
+    /// Pauses the simulation while popup is open
+    pub fn open_recording_popup(&mut self) {
+        // Save current pause state and pause the simulation
+        self.recording_was_paused = self.simulation.paused;
+        self.simulation.paused = true;
+
+        self.recording_popup = Some(TextInputPopup::new(
+            " Start Recording ",
+            "dla_recording.mp4",
+        ));
+    }
+
+    /// Close recording popup without starting
+    /// Restores previous pause state
+    pub fn close_recording_popup(&mut self) {
+        self.recording_popup = None;
+        // Restore previous pause state
+        self.simulation.paused = self.recording_was_paused;
+    }
+
+    /// Start recording with the given filename
+    pub fn start_recording(&mut self, filename: String) -> Result<(), String> {
+        self.recorder.start(
+            filename,
+            self.simulation.grid_width,
+            self.simulation.grid_height,
+        )
+    }
+
+    /// Stop recording and save the file
+    pub fn stop_recording(&mut self) -> Result<String, String> {
+        self.recorder.stop()
+    }
+
+    /// Capture a recording frame if recording and ready
+    pub fn capture_recording_frame(&mut self) {
+        if self.recorder.is_recording() && self.recorder.should_capture() {
+            let color_mode = self.simulation.settings.color_mode;
+            let invert = self.simulation.settings.invert_colors;
+            if let Err(e) = self.recorder.capture_frame(
+                &self.simulation,
+                &self.color_scheme,
+                self.color_by_age,
+                color_mode,
+                invert,
+            ) {
+                // Store error and stop recording
+                self.recording_result = Some(Err(e));
+                let _ = self.recorder.stop();
+            }
+        }
+    }
+
+    /// Clear recording result (call after displaying it)
+    pub fn clear_recording_result(&mut self) {
+        self.recording_result = None;
     }
 }

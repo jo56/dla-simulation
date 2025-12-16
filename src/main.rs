@@ -3,6 +3,7 @@ mod braille;
 mod color;
 mod config;
 mod presets;
+mod recorder;
 mod settings;
 mod simulation;
 mod ui;
@@ -338,6 +339,9 @@ fn run_app<B: ratatui::backend::Backend>(
         // Render current state
         terminal.draw(|frame| ui::render(frame, app))?;
 
+        // Capture recording frame if recording
+        app.capture_recording_frame();
+
         // Poll for events with timeout
         if event::poll(FRAME_DURATION)? {
             match event::read()? {
@@ -394,9 +398,60 @@ fn run_app<B: ratatui::backend::Backend>(
                         continue;
                     }
 
+                    // === Handle recording popup keys (if recording popup is open) ===
+                    if app.recording_popup.is_some() {
+                        match key.code {
+                            KeyCode::Enter => {
+                                if let Some(popup) = app.recording_popup.take() {
+                                    // Restore previous pause state before starting recording
+                                    let was_paused = app.recording_was_paused;
+                                    match app.start_recording(popup.input) {
+                                        Ok(()) => {
+                                            // Resume simulation if it wasn't paused before
+                                            app.simulation.paused = was_paused;
+                                        }
+                                        Err(e) => {
+                                            app.recording_result = Some(Err(e));
+                                            // Still restore pause state on error
+                                            app.simulation.paused = was_paused;
+                                        }
+                                    }
+                                }
+                            }
+                            KeyCode::Esc => app.close_recording_popup(),
+                            KeyCode::Backspace => {
+                                if let Some(popup) = &mut app.recording_popup {
+                                    popup.delete_char();
+                                }
+                            }
+                            KeyCode::Left => {
+                                if let Some(popup) = &mut app.recording_popup {
+                                    popup.move_cursor_left();
+                                }
+                            }
+                            KeyCode::Right => {
+                                if let Some(popup) = &mut app.recording_popup {
+                                    popup.move_cursor_right();
+                                }
+                            }
+                            KeyCode::Char(c) => {
+                                if let Some(popup) = &mut app.recording_popup {
+                                    popup.insert_char(c);
+                                }
+                            }
+                            _ => {}
+                        }
+                        continue;
+                    }
+
                     // Clear export result on any key press
                     if app.export_result.is_some() {
                         app.clear_export_result();
+                    }
+
+                    // Clear recording result on any key press
+                    if app.recording_result.is_some() {
+                        app.clear_recording_result();
                     }
 
                     // === Handle Shift+letter to open popup ===
@@ -428,6 +483,23 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('r') | KeyCode::Char('R') => app.reset(),
                         KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
                         KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
+                        // Recording toggle (backtick)
+                        KeyCode::Char('`') => {
+                            if app.is_recording() {
+                                // Stop recording
+                                match app.stop_recording() {
+                                    Ok(msg) => {
+                                        app.recording_result = Some(Ok(msg));
+                                    }
+                                    Err(e) => {
+                                        app.recording_result = Some(Err(e));
+                                    }
+                                }
+                            } else if app.recording_popup.is_none() {
+                                // Open filename popup
+                                app.open_recording_popup();
+                            }
+                        }
                         KeyCode::Char('1') => app.set_seed_pattern(SeedPattern::Point),
                         KeyCode::Char('2') => app.set_seed_pattern(SeedPattern::Line),
                         KeyCode::Char('3') => app.set_seed_pattern(SeedPattern::Cross),
