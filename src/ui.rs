@@ -207,7 +207,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled(dim_text, Style::default().fg(TEXT_COLOR))),
         Line::from(vec![
             Span::styled(
-                format!("{} / {}", app.simulation.particles_stuck, app.simulation.num_particles),
+                format!("N: {} / {}", app.simulation.particles_stuck, app.simulation.num_particles),
                 Style::default().fg(TEXT_COLOR),
             ),
         ]),
