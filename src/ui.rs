@@ -204,6 +204,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
     };
 
     let content = vec![
+        Line::from(Span::styled(dim_text, Style::default().fg(TEXT_COLOR))),
         Line::from(vec![
             Span::styled(
                 format!("{} / {}", app.simulation.particles_stuck, app.simulation.num_particles),
@@ -214,7 +215,6 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("█".repeat(filled), Style::default().fg(Color::Green)),
             Span::styled("░".repeat(empty), Style::default().fg(Color::DarkGray)),
         ]),
-        Line::from(Span::styled(dim_text, Style::default().fg(DIM_TEXT_COLOR))),
         Line::from(Span::styled(status_text, Style::default().fg(status_color))),
     ];
 
