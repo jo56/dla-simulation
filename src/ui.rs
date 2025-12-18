@@ -226,7 +226,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
     let is_focused = app.focus.is_param();
     let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
     let title = if is_focused {
-        " Params (j/k adjust)"
+        " Params (w/s/j/k) "
     } else {
         " Params "
     };
@@ -452,7 +452,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("↑↓", key_style),
+            Span::styled("w/s/↑↓", key_style),
             Span::styled(" navigate", desc_style),
         ]),
         Line::from(vec![
@@ -566,7 +566,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let is_focused = app.focus == Focus::Controls;
 
     let title = if is_focused {
-        " Controls (↑↓) "
+        " Controls (w/s/↑↓) "
     } else {
         " Controls "
     };
@@ -688,7 +688,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("R - Reset simulation", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Tab - Next parameter", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Up/Down - Scroll", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("w/s/↑↓ - Navigate/Scroll", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("j/k - Adjust focused value", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Esc - Close help / exit focus", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("V - Toggle fullscreen", Style::default().fg(TEXT_COLOR))),
@@ -716,8 +716,8 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("M - Cycle color mode", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("N - Cycle neighborhood type", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("B - Cycle boundary behavior", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("S - Cycle spawn mode", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("W/E - Walk step size +/-", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Shift+S - Spawn popup", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Shift+W/E - Walk step +/-", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("I - Invert colors", Style::default().fg(TEXT_COLOR))),
         Line::from(""),
         Line::from(Span::styled("MOVEMENT PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),

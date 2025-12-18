@@ -185,7 +185,7 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `R` | Reset simulation |
 | `Tab` | Next parameter |
 | `Shift+Tab` | Previous parameter |
-| `Up/Down` | Scroll |
+| `w/s/Up/Down` | Navigate/Scroll |
 | `j/k` | Adjust focused value |
 | `Esc` | Close help / exit focus |
 | `V` | Toggle fullscreen |
@@ -221,9 +221,9 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `M` | Cycle color mode |
 | `N` | Cycle neighborhood type |
 | `B` | Cycle boundary behavior |
-| `S` | Cycle spawn mode |
-| `W` | Increase walk step size |
-| `E` | Decrease walk step size |
+| `Shift+S` | Open spawn mode popup |
+| `Shift+W` | Increase walk step size |
+| `Shift+E` | Decrease walk step size |
 | `I` | Invert colors |
 
 ## Parameters

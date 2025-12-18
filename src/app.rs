@@ -133,7 +133,6 @@ impl Focus {
     pub fn prev(&self) -> Focus {
         match self {
             Focus::None | Focus::Controls => Focus::Speed,
-            Focus::Direction => Focus::AdaptiveStep,
             // Movement: adaptive, adapt factor, direction, force, lattice, radial, walk
             Focus::AdaptiveStep => Focus::AdaptiveStep, // Stop at boundary
             Focus::AdaptiveFactor => Focus::AdaptiveStep,
@@ -253,7 +252,7 @@ impl App {
             color_lut: color_scheme.build_lut(),
             color_scheme,
             color_by_age: true,
-            focus: Focus::Direction,
+            focus: Focus::AdaptiveStep,
             fullscreen_mode: false,
             steps_per_frame: 5,
             show_help: false,

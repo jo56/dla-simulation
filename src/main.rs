@@ -470,6 +470,18 @@ fn run_app<B: ratatui::backend::Backend>(
                                 app.open_export_popup();
                                 continue;
                             }
+                            // Shift+W directly adjusts walk step (since w is now navigation)
+                            if c == 'W' || c == 'w' {
+                                app.adjust_walk_step(0.5);
+                                app.focus = Focus::WalkStep;
+                                continue;
+                            }
+                            // Shift+E directly adjusts walk step down
+                            if c == 'E' || c == 'e' {
+                                app.adjust_walk_step(-0.5);
+                                app.focus = Focus::WalkStep;
+                                continue;
+                            }
                             // Shift+letter opens popup for that letter
                             if c.is_ascii_alphabetic() {
                                 app.open_param_popup(c);
@@ -552,17 +564,28 @@ fn run_app<B: ratatui::backend::Backend>(
                             app.cycle_boundary();
                             app.focus = Focus::Boundary;
                         }
-                        KeyCode::Char('s') | KeyCode::Char('S') => {
-                            app.cycle_spawn_mode();
-                            app.focus = Focus::Spawn;
+                        // w/s for navigation (like Up/Down arrows)
+                        KeyCode::Char('w') => {
+                            if app.show_help {
+                                app.scroll_help_up();
+                            } else if app.focus.is_param() {
+                                app.prev_focus();
+                            } else {
+                                app.scroll_controls_up();
+                            }
                         }
-                        KeyCode::Char('w') | KeyCode::Char('W') => {
-                            app.adjust_walk_step(0.5);
-                            app.focus = Focus::WalkStep;
-                        }
-                        KeyCode::Char('e') | KeyCode::Char('E') => {
-                            app.adjust_walk_step(-0.5);
-                            app.focus = Focus::WalkStep;
+                        KeyCode::Char('s') => {
+                            if app.show_help {
+                                let term_size = terminal.size().unwrap_or_default();
+                                let visible = ui::get_help_visible_lines(term_size.height);
+                                app.scroll_help_down(ui::HELP_CONTENT_LINES.saturating_sub(visible));
+                            } else if app.focus.is_param() {
+                                app.next_focus();
+                            } else {
+                                let term_size = terminal.size().unwrap_or_default();
+                                let visible = ui::get_controls_visible_lines(term_size.height);
+                                app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES.saturating_sub(visible));
+                            }
                         }
 
                         // j/k for adjusting focused parameter values
