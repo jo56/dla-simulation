@@ -17,7 +17,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 
 - **High-resolution Braille rendering** - Each terminal character displays a 2x4 dot pattern
 - **Real-time simulation** - Watch the fractal structure grow
-- **24 adjustable parameters** - Fine-tune movement, sticking behavior, spawning, and visuals
+- **28 adjustable parameters** - Fine-tune movement, sticking behavior, spawning, visuals, and theme colors
 - **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
 - **8 color schemes** - Ice, Fire, Plasma, Viridis, Rainbow, Grayscale, Ocean, Neon
 - **Parameter popup** - Quick access to any parameter via Shift+letter
@@ -121,6 +121,17 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 | `--highlight` | Recent particles to highlight (0-50) | 0 |
 | `--invert` | Invert color gradient | false |
 
+#### Theme Options
+
+Customize the UI colors using named colors (e.g., `cyan`, `red`, `lightgreen`) or hex values (e.g., `#FF5500`).
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--border-color` | Border and box outline color | Cyan |
+| `--text-color` | Main text color | White |
+| `--highlight-color` | Focused/selected item color | Yellow |
+| `--dim-text-color` | Secondary/hint text color | Gray |
+
 ### Examples
 
 ```bash
@@ -138,6 +149,9 @@ dla-simulation --boundary wrap --spawn-mode random
 
 # Color by approach direction with inverted gradient
 dla-simulation --color-mode direction --invert
+
+# Custom theme colors (named or hex)
+dla-simulation --border-color red --highlight-color "#00FF00"
 ```
 
 ### Config Files
@@ -228,7 +242,7 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 
 ## Parameters
 
-The simulation has 24 adjustable parameters organized into four categories.
+The simulation has 28 adjustable parameters organized into five categories.
 
 ### Movement Parameters
 
@@ -307,6 +321,21 @@ Control how the simulation is displayed.
 - **Distance**: Color based on distance from center
 - **Density**: Color based on neighbor count when stuck
 - **Direction**: Color based on approach angle when stuck
+
+### Theme Parameters
+
+Customize the UI appearance with custom colors.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| Border | Cyan | Color for box borders and outlines |
+| Dim Text | Gray | Color for secondary/hint text |
+| Highlight | Yellow | Color for focused/selected items |
+| Text | White | Main text color |
+
+**Available Named Colors:** Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, LightYellow, LightBlue, LightMagenta, LightCyan, White
+
+You can also use hex colors (e.g., `#FF5500`) via CLI arguments or config files. Theme settings are saved when exporting config files and will be restored when loading them.
 
 ### Seed Patterns
 

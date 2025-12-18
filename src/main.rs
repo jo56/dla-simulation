@@ -10,6 +10,7 @@ mod ui;
 
 use app::{App, Focus};
 use clap::{CommandFactory, FromArgMatches, Parser};
+use color::UiColor;
 use config::AppConfig;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
@@ -122,6 +123,23 @@ struct Args {
     /// Invert color gradient
     #[arg(long, default_value = "false")]
     invert: bool,
+
+    // === Theme Parameters ===
+    /// Border color (named color like 'cyan' or hex like '#FF5500')
+    #[arg(long = "border-color")]
+    border_color: Option<String>,
+
+    /// Text color (named color like 'white' or hex like '#FFFFFF')
+    #[arg(long = "text-color")]
+    text_color: Option<String>,
+
+    /// Highlight color (named color like 'yellow' or hex like '#FFFF00')
+    #[arg(long = "highlight-color")]
+    highlight_color: Option<String>,
+
+    /// Dim text color (named color like 'gray' or hex like '#808080')
+    #[arg(long = "dim-text-color")]
+    dim_text_color: Option<String>,
 }
 
 fn parse_neighborhood(s: &str) -> NeighborhoodType {
@@ -290,6 +308,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if is_explicit("invert") || base_config.is_none() {
         app.simulation.settings.invert_colors = args.invert;
+    }
+
+    // Theme color settings (only apply if explicitly provided)
+    if let Some(color_str) = &args.border_color {
+        if let Some(color) = UiColor::from_str(color_str) {
+            app.ui_theme.border_color = color;
+        }
+    }
+    if let Some(color_str) = &args.text_color {
+        if let Some(color) = UiColor::from_str(color_str) {
+            app.ui_theme.text_color = color;
+        }
+    }
+    if let Some(color_str) = &args.highlight_color {
+        if let Some(color) = UiColor::from_str(color_str) {
+            app.ui_theme.highlight_color = color;
+        }
+    }
+    if let Some(color_str) = &args.dim_text_color {
+        if let Some(color) = UiColor::from_str(color_str) {
+            app.ui_theme.dim_text_color = color;
+        }
     }
 
     // Determine seed pattern - CLI overrides config
