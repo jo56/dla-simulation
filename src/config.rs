@@ -1,4 +1,4 @@
-use crate::color::ColorScheme;
+use crate::color::{ColorScheme, UiTheme};
 use crate::settings::SimulationSettings;
 use crate::simulation::SeedPattern;
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,9 @@ pub struct AppConfig {
     pub steps_per_frame: usize,
     /// Color by age toggle (app-level)
     pub color_by_age: bool,
+    /// UI theme colors (app-level)
+    #[serde(default)]
+    pub ui_theme: UiTheme,
 }
 
 impl AppConfig {
@@ -54,6 +57,7 @@ impl Default for AppConfig {
             color_scheme: ColorScheme::default(),
             steps_per_frame: 5,
             color_by_age: true,
+            ui_theme: UiTheme::default(),
         }
     }
 }
@@ -94,6 +98,7 @@ mod tests {
             color_scheme: ColorScheme::Fire,
             steps_per_frame: 10,
             color_by_age: false,
+            ui_theme: UiTheme::default(),
         };
 
         // Serialize to JSON
@@ -166,6 +171,7 @@ mod tests {
             color_scheme: ColorScheme::Neon,
             steps_per_frame: 25,
             color_by_age: false,
+            ui_theme: UiTheme::default(),
         };
 
         let json = serde_json::to_string(&original).unwrap();

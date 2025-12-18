@@ -1,5 +1,5 @@
 use crate::braille;
-use crate::color::{ColorLut, ColorScheme};
+use crate::color::{ColorLut, ColorScheme, UiTheme};
 use crate::config::AppConfig;
 use crate::recorder::Recorder;
 use crate::simulation::{DlaSimulation, SeedPattern};
@@ -60,12 +60,15 @@ pub enum Focus {
     None,
     // Parameters (enum variants kept alphabetical, navigation order defined in next/prev)
     Age,            // color by age toggle
+    BorderColor,    // Theme: border color
     Boundary,
     ColorScheme,
+    DimTextColor,   // Theme: dim text color
     Direction,
     EscapeMult,
     Force,
     Highlight,
+    HighlightColor, // Theme: highlight color
     Invert,
     MaxIterations,
     MinRadius,
@@ -81,6 +84,7 @@ pub enum Focus {
     Speed,
     Stickiness,
     StickyGradient,
+    TextColor,      // Theme: text color
     TipSticky,
     WalkStep,
     // Controls box (not a param)
@@ -119,14 +123,19 @@ impl Focus {
             Focus::Mode => Focus::Particles,
             Focus::Particles => Focus::Seed,
             Focus::Seed => Focus::Speed,
-            Focus::Speed => Focus::Speed, // Stop at boundary
+            // Theme (border, dimtext, highlight, text)
+            Focus::Speed => Focus::BorderColor,
+            Focus::BorderColor => Focus::DimTextColor,
+            Focus::DimTextColor => Focus::HighlightColor,
+            Focus::HighlightColor => Focus::TextColor,
+            Focus::TextColor => Focus::TextColor, // Stop at boundary
         }
     }
 
     /// Navigate to previous parameter (grouped, alphabetical within groups)
     pub fn prev(&self) -> Focus {
         match self {
-            Focus::None | Focus::Controls => Focus::Speed,
+            Focus::None | Focus::Controls => Focus::TextColor,
             // Movement (direction, force, radial, walk)
             Focus::Direction => Focus::Direction, // Stop at boundary
             Focus::Force => Focus::Direction,
@@ -155,6 +164,11 @@ impl Focus {
             Focus::Particles => Focus::Mode,
             Focus::Seed => Focus::Particles,
             Focus::Speed => Focus::Seed,
+            // Theme (border, dimtext, highlight, text)
+            Focus::BorderColor => Focus::Speed,
+            Focus::DimTextColor => Focus::BorderColor,
+            Focus::HighlightColor => Focus::DimTextColor,
+            Focus::TextColor => Focus::HighlightColor,
         }
     }
 
@@ -169,6 +183,8 @@ impl Focus {
         // 13-18: bound, escape, maxsteps, minradius, spawn, spawnoff
         // 19: -- visual --
         // 20-27: age, color, highlight, invert, mode, particles, seed, speed
+        // 28: -- theme --
+        // 29-32: border, dimtext, highlight, text
         match self {
             Focus::None | Focus::Controls => 0,
             // Movement (after header at line 0)
@@ -199,6 +215,11 @@ impl Focus {
             Focus::Particles => 25,
             Focus::Seed => 26,
             Focus::Speed => 27,
+            // Theme (after header at line 28)
+            Focus::BorderColor => 29,
+            Focus::DimTextColor => 30,
+            Focus::HighlightColor => 31,
+            Focus::TextColor => 32,
         }
     }
 
@@ -214,6 +235,7 @@ pub struct App {
     pub color_scheme: ColorScheme,
     pub color_lut: ColorLut,
     pub color_by_age: bool,
+    pub ui_theme: UiTheme,
     pub focus: Focus,
     pub fullscreen_mode: bool,
     pub steps_per_frame: usize,
@@ -240,6 +262,7 @@ impl App {
             color_lut: color_scheme.build_lut(),
             color_scheme,
             color_by_age: true,
+            ui_theme: UiTheme::default(),
             focus: Focus::Controls,
             fullscreen_mode: false,
             steps_per_frame: 5,
@@ -305,6 +328,11 @@ impl App {
             Focus::EscapeMult => self.simulation.settings.adjust_escape_multiplier(0.5),
             Focus::MinRadius => self.simulation.settings.adjust_min_spawn_radius(10.0),
             Focus::MaxIterations => self.simulation.settings.adjust_max_walk_iterations(1000),
+            // Theme
+            Focus::BorderColor => self.ui_theme.border_color = self.ui_theme.border_color.next(),
+            Focus::TextColor => self.ui_theme.text_color = self.ui_theme.text_color.next(),
+            Focus::HighlightColor => self.ui_theme.highlight_color = self.ui_theme.highlight_color.next(),
+            Focus::DimTextColor => self.ui_theme.dim_text_color = self.ui_theme.dim_text_color.next(),
         }
     }
 
@@ -346,6 +374,11 @@ impl App {
             Focus::EscapeMult => self.simulation.settings.adjust_escape_multiplier(-0.5),
             Focus::MinRadius => self.simulation.settings.adjust_min_spawn_radius(-10.0),
             Focus::MaxIterations => self.simulation.settings.adjust_max_walk_iterations(-1000),
+            // Theme
+            Focus::BorderColor => self.ui_theme.border_color = self.ui_theme.border_color.prev(),
+            Focus::TextColor => self.ui_theme.text_color = self.ui_theme.text_color.prev(),
+            Focus::HighlightColor => self.ui_theme.highlight_color = self.ui_theme.highlight_color.prev(),
+            Focus::DimTextColor => self.ui_theme.dim_text_color = self.ui_theme.dim_text_color.prev(),
         }
     }
 
@@ -498,13 +531,16 @@ impl App {
         let letter = letter.to_ascii_lowercase();
         let all_params: &[(char, Focus, &str)] = &[
             ('a', Focus::Age, "Age (Color by)"),
+            ('b', Focus::BorderColor, "Border Color"),
             ('b', Focus::Boundary, "Boundary"),
             ('c', Focus::ColorScheme, "Color Scheme"),
+            ('d', Focus::DimTextColor, "Dim Text Color"),
             ('d', Focus::Direction, "Direction"),
             ('e', Focus::EscapeMult, "Escape Multiplier"),
             ('f', Focus::Force, "Force (Bias Strength)"),
             ('g', Focus::StickyGradient, "Gradient (Stickiness)"),
             ('h', Focus::Highlight, "Highlight"),
+            ('h', Focus::HighlightColor, "Highlight Color"),
             ('i', Focus::Invert, "Invert"),
             ('m', Focus::Mode, "Mode (Color)"),
             ('m', Focus::MultiContact, "Multi-Contact Min"),
@@ -519,6 +555,7 @@ impl App {
             ('s', Focus::Speed, "Speed"),
             ('s', Focus::SideSticky, "Side Stickiness"),
             ('s', Focus::Spawn, "Spawn Mode"),
+            ('t', Focus::TextColor, "Text Color"),
             ('t', Focus::TipSticky, "Tip Stickiness"),
             ('w', Focus::WalkStep, "Walk Step"),
         ];
@@ -545,13 +582,16 @@ impl App {
     fn get_all_params() -> Vec<(Focus, &'static str)> {
         vec![
             (Focus::Age, "Age (Color by)"),
+            (Focus::BorderColor, "Border Color"),
             (Focus::Boundary, "Boundary"),
             (Focus::ColorScheme, "Color Scheme"),
+            (Focus::DimTextColor, "Dim Text Color"),
             (Focus::Direction, "Direction"),
             (Focus::EscapeMult, "Escape Multiplier"),
             (Focus::Force, "Force (Bias Strength)"),
             (Focus::StickyGradient, "Gradient (Stickiness)"),
             (Focus::Highlight, "Highlight"),
+            (Focus::HighlightColor, "Highlight Color"),
             (Focus::Invert, "Invert"),
             (Focus::MaxIterations, "Max Steps"),
             (Focus::MinRadius, "Min Spawn Radius"),
@@ -566,6 +606,7 @@ impl App {
             (Focus::Spawn, "Spawn Mode"),
             (Focus::Speed, "Speed"),
             (Focus::Stickiness, "Stickiness"),
+            (Focus::TextColor, "Text Color"),
             (Focus::TipSticky, "Tip Stickiness"),
             (Focus::WalkStep, "Walk Step"),
         ]
@@ -669,6 +710,7 @@ impl App {
             color_scheme: self.color_scheme,
             steps_per_frame: self.steps_per_frame,
             color_by_age: self.color_by_age,
+            ui_theme: self.ui_theme.clone(),
         }
     }
 
@@ -682,6 +724,7 @@ impl App {
         self.color_lut = self.color_scheme.build_lut();
         self.steps_per_frame = config.steps_per_frame;
         self.color_by_age = config.color_by_age;
+        self.ui_theme = config.ui_theme.clone();
     }
 
     // === Recording methods ===
