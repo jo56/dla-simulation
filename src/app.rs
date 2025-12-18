@@ -73,15 +73,6 @@ impl ViewMode {
             ViewMode::Fullscreen => ViewMode::Default,
         }
     }
-
-    /// Get display name for status/help
-    pub fn name(&self) -> &str {
-        match self {
-            ViewMode::Default => "Default",
-            ViewMode::States => "States",
-            ViewMode::Fullscreen => "Fullscreen",
-        }
-    }
 }
 
 /// Focus state for parameter editing in the sidebar

@@ -640,20 +640,18 @@ fn render_states_layout(frame: &mut Frame, area: Rect, app: &App) {
     render_canvas(frame, layout[1], app);
 }
 
-/// Render the States panel with status, two-column params, and compact controls
+/// Render the States panel with status and two-column params
 fn render_states_panel(frame: &mut Frame, area: Rect, app: &App) {
     let sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(5),  // Status box
             Constraint::Min(10),    // Two-column params (fills available space)
-            Constraint::Length(6),  // Compact controls
         ])
         .split(area);
 
     render_status_box(frame, sections[0], app);
     render_two_column_params(frame, sections[1], app);
-    render_states_controls_box(frame, sections[2], app);
 }
 
 /// Render parameters in two columns for States mode
@@ -811,54 +809,6 @@ fn render_two_column_params(frame: &mut Frame, area: Rect, app: &App) {
 
     let right_paragraph = Paragraph::new(right_content).scroll((right_scroll, 0));
     frame.render_widget(right_paragraph, columns[1]);
-}
-
-/// Compact controls box for States mode
-fn render_states_controls_box(frame: &mut Frame, area: Rect, app: &App) {
-    let key_style = Style::default().fg(HIGHLIGHT_COLOR);
-    let desc_style = Style::default().fg(DIM_TEXT_COLOR);
-
-    let content = vec![
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Spc", key_style),
-            Span::styled(" pause ", desc_style),
-            Span::styled("R", key_style),
-            Span::styled(" reset ", desc_style),
-            Span::styled("Q", key_style),
-            Span::styled(" quit ", desc_style),
-            Span::styled("H", key_style),
-            Span::styled(" help", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("V", key_style),
-            Span::styled(" view ", desc_style),
-            Span::styled("Tab", key_style),
-            Span::styled(" nav ", desc_style),
-            Span::styled("w/s", key_style),
-            Span::styled(" select ", desc_style),
-            Span::styled("j/k", key_style),
-            Span::styled(" adj", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("View: ", desc_style),
-            Span::styled(app.view_mode.name(), Style::default().fg(BORDER_COLOR)),
-            Span::styled(" | ", desc_style),
-            Span::styled("Shift+?", key_style),
-            Span::styled(" lookup all", desc_style),
-        ]),
-    ];
-
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(BORDER_COLOR))
-        .title(" Controls ");
-
-    let paragraph = Paragraph::new(content).block(block);
-    frame.render_widget(paragraph, area);
 }
 
 fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
