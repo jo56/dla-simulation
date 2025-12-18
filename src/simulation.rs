@@ -96,8 +96,6 @@ pub struct DlaSimulation {
     /// Advanced simulation settings
     pub settings: SimulationSettings,
     rng: ThreadRng,
-    /// History of (particles_stuck, max_radius) for growth analysis
-    pub growth_history: Vec<(usize, f32)>,
 }
 
 impl DlaSimulation {
@@ -114,7 +112,6 @@ impl DlaSimulation {
             seed_pattern: SeedPattern::Point,
             settings: SimulationSettings::default(),
             rng: rand::thread_rng(),
-            growth_history: Vec::with_capacity(100),
         };
         sim.reset();
         sim
@@ -213,11 +210,6 @@ impl DlaSimulation {
 
                             // Update max radius
                             self.max_radius = self.max_radius.max(distance);
-
-                            // Record growth history every 50 particles for analysis
-                            if self.particles_stuck % 50 == 0 {
-                                self.growth_history.push((self.particles_stuck, self.max_radius));
-                            }
 
                             return true;
                         }
@@ -434,9 +426,6 @@ impl DlaSimulation {
         } else {
             self.grid.fill(None);
         }
-
-        // Clear growth history for new simulation
-        self.growth_history.clear();
 
         self.seed_pattern = pattern;
 
@@ -902,56 +891,4 @@ impl DlaSimulation {
         (slope.abs(), r_squared)
     }
 
-    /// Calculate growth exponent from history
-    /// For DLA: R ∝ N^(1/D) where D ≈ 1.71, so exponent ≈ 0.58
-    /// Returns (exponent, r_squared)
-    pub fn calculate_growth_exponent(&self) -> (f32, f32) {
-        if self.growth_history.len() < 5 {
-            return (0.0, 0.0);
-        }
-
-        // Fit log(R) = exponent * log(N) + c
-        let log_data: Vec<(f32, f32)> = self
-            .growth_history
-            .iter()
-            .filter(|(n, r)| *n > 10 && *r > 1.0)
-            .map(|(n, r)| ((*n as f32).ln(), r.ln()))
-            .collect();
-
-        if log_data.len() < 3 {
-            return (0.0, 0.0);
-        }
-
-        let n = log_data.len() as f32;
-        let sum_x: f32 = log_data.iter().map(|(x, _)| x).sum();
-        let sum_y: f32 = log_data.iter().map(|(_, y)| y).sum();
-        let sum_xy: f32 = log_data.iter().map(|(x, y)| x * y).sum();
-        let sum_x2: f32 = log_data.iter().map(|(x, _)| x * x).sum();
-
-        let denom = n * sum_x2 - sum_x * sum_x;
-        if denom.abs() < 1e-10 {
-            return (0.0, 0.0);
-        }
-
-        let slope = (n * sum_xy - sum_x * sum_y) / denom;
-
-        // Calculate R-squared
-        let mean_y = sum_y / n;
-        let ss_tot: f32 = log_data.iter().map(|(_, y)| (y - mean_y).powi(2)).sum();
-        if ss_tot.abs() < 1e-10 {
-            return (slope, 1.0);
-        }
-
-        let intercept = (sum_y - slope * sum_x) / n;
-        let ss_res: f32 = log_data
-            .iter()
-            .map(|(x, y)| {
-                let predicted = slope * x + intercept;
-                (y - predicted).powi(2)
-            })
-            .sum();
-        let r_squared = (1.0 - ss_res / ss_tot).max(0.0);
-
-        (slope, r_squared)
-    }
 }
