@@ -11,7 +11,7 @@ use ratatui::{
 const SIDEBAR_WIDTH: u16 = 22;
 
 /// Max scroll for help content (generous to account for text wrapping on small screens)
-pub const HELP_CONTENT_LINES: u16 = 71;
+pub const HELP_CONTENT_LINES: u16 = 73;
 
 /// Number of lines in controls content (5 main + 18 Shift+letter hints + 1 record)
 pub const CONTROLS_CONTENT_LINES: u16 = 24;
@@ -651,7 +651,9 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("R - Reset simulation", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Tab - Next parameter", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Up/Down - Adjust value / scroll", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Up/Down - Scroll", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("j/k - Adjust focused value", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Esc - Close help / exit focus", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("V - Toggle fullscreen", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("` - Start/stop recording", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Shift+X - Export config to file", Style::default().fg(TEXT_COLOR))),

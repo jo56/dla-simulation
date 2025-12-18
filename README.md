@@ -185,7 +185,9 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `R` | Reset simulation |
 | `Tab` | Next parameter |
 | `Shift+Tab` | Previous parameter |
-| `Up/Down` | Adjust value / scroll |
+| `Up/Down` | Scroll |
+| `j/k` | Adjust focused value |
+| `Esc` | Close help / exit focus |
 | `V` | Toggle fullscreen |
 | `` ` `` | Start/stop recording |
 | `Shift+X` | Export config to file |
