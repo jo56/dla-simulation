@@ -14,7 +14,7 @@ const SIDEBAR_WIDTH: u16 = 22;
 pub const HELP_CONTENT_LINES: u16 = 73;
 
 /// Number of lines in controls content (5 main + 18 Shift+letter hints + 1 record)
-pub const CONTROLS_CONTENT_LINES: u16 = 24;
+pub const CONTROLS_CONTENT_LINES: u16 = 25;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -425,6 +425,11 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled(" view  ", desc_style),
             Span::styled("1-0", key_style),
             Span::styled(" seeds", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("↑↓", key_style),
+            Span::styled(" navigate", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
