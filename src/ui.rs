@@ -209,7 +209,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
     let is_focused = app.focus.is_param();
     let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
     let title = if is_focused {
-        " Params (↑↓ adjust)"
+        " Params (j/k adjust)"
     } else {
         " Params "
     };
@@ -231,32 +231,21 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
 
     let settings = &app.simulation.settings;
 
-    // Alphabetically ordered parameters
+    let make_header = |label: &str| {
+        Line::from(Span::styled(
+            format!(" - {} -", label.to_lowercase()),
+            Style::default().fg(DIM_TEXT_COLOR),
+        ))
+    };
+
+    // Parameters grouped by type, alphabetical within each group
     let content = vec![
-        make_line(
-            "age",
-            if app.color_by_age { "on" } else { "off" }.to_string(),
-            app.focus == Focus::Age,
-        ),
-        make_line(
-            "bound",
-            settings.boundary_behavior.name().to_lowercase(),
-            app.focus == Focus::Boundary,
-        ),
-        make_line(
-            "color",
-            app.color_scheme.name().to_lowercase(),
-            app.focus == Focus::ColorScheme,
-        ),
+        // === Movement (alphabetical: direction, force, radial, walk) ===
+        make_header("Movement"),
         make_line(
             "direction",
             format!("{:.0}°", settings.walk_bias_angle),
             app.focus == Focus::Direction,
-        ),
-        make_line(
-            "escape",
-            format!("{:.1}", settings.escape_multiplier),
-            app.focus == Focus::EscapeMult,
         ),
         make_line(
             "force",
@@ -264,14 +253,58 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Force,
         ),
         make_line(
-            "highlight",
-            format!("{}", settings.highlight_recent),
-            app.focus == Focus::Highlight,
+            "radial",
+            format!("{:.2}", settings.radial_bias),
+            app.focus == Focus::RadialBias,
         ),
         make_line(
-            "invert",
-            if settings.invert_colors { "on" } else { "off" }.to_string(),
-            app.focus == Focus::Invert,
+            "walk",
+            format!("{:.1}", settings.walk_step_size),
+            app.focus == Focus::WalkStep,
+        ),
+        // === Sticking (alphabetical: contacts, gradient, neighbors, sidestick, sticky, tipstick) ===
+        make_header("Sticking"),
+        make_line(
+            "contacts",
+            format!("{}", settings.multi_contact_min),
+            app.focus == Focus::MultiContact,
+        ),
+        make_line(
+            "gradient",
+            format!("{:.1}", settings.stickiness_gradient),
+            app.focus == Focus::StickyGradient,
+        ),
+        make_line(
+            "neighbors",
+            settings.neighborhood.short_name().to_lowercase(),
+            app.focus == Focus::Neighborhood,
+        ),
+        make_line(
+            "sidestick",
+            format!("{:.1}", settings.side_stickiness),
+            app.focus == Focus::SideSticky,
+        ),
+        make_line(
+            "sticky",
+            format!("{:.2}", app.simulation.stickiness),
+            app.focus == Focus::Stickiness,
+        ),
+        make_line(
+            "tipstick",
+            format!("{:.1}", settings.tip_stickiness),
+            app.focus == Focus::TipSticky,
+        ),
+        // === Spawn (alphabetical: bound, escape, maxsteps, minradius, spawn, spawnoff) ===
+        make_header("Spawn"),
+        make_line(
+            "bound",
+            settings.boundary_behavior.name().to_lowercase(),
+            app.focus == Focus::Boundary,
+        ),
+        make_line(
+            "escape",
+            format!("{:.1}", settings.escape_multiplier),
+            app.focus == Focus::EscapeMult,
         ),
         make_line(
             "maxsteps",
@@ -284,41 +317,6 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::MinRadius,
         ),
         make_line(
-            "mode",
-            settings.color_mode.name().to_lowercase(),
-            app.focus == Focus::Mode,
-        ),
-        make_line(
-            "contacts",
-            format!("{}", settings.multi_contact_min),
-            app.focus == Focus::MultiContact,
-        ),
-        make_line(
-            "neighbors",
-            settings.neighborhood.short_name().to_lowercase(),
-            app.focus == Focus::Neighborhood,
-        ),
-        make_line(
-            "particles",
-            format!("{}", app.simulation.num_particles),
-            app.focus == Focus::Particles,
-        ),
-        make_line(
-            "radial",
-            format!("{:.2}", settings.radial_bias),
-            app.focus == Focus::RadialBias,
-        ),
-        make_line(
-            "seed",
-            app.simulation.seed_pattern.name().to_lowercase(),
-            app.focus == Focus::Seed,
-        ),
-        make_line(
-            "sidestick",
-            format!("{:.1}", settings.side_stickiness),
-            app.focus == Focus::SideSticky,
-        ),
-        make_line(
             "spawn",
             settings.spawn_mode.name().to_lowercase(),
             app.focus == Focus::Spawn,
@@ -328,30 +326,47 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             format!("{:.0}", settings.spawn_radius_offset),
             app.focus == Focus::SpawnOffset,
         ),
+        // === Visual (alphabetical: age, color, highlight, invert, mode, particles, seed, speed) ===
+        make_header("Visual"),
+        make_line(
+            "age",
+            if app.color_by_age { "on" } else { "off" }.to_string(),
+            app.focus == Focus::Age,
+        ),
+        make_line(
+            "color",
+            app.color_scheme.name().to_lowercase(),
+            app.focus == Focus::ColorScheme,
+        ),
+        make_line(
+            "highlight",
+            format!("{}", settings.highlight_recent),
+            app.focus == Focus::Highlight,
+        ),
+        make_line(
+            "invert",
+            if settings.invert_colors { "on" } else { "off" }.to_string(),
+            app.focus == Focus::Invert,
+        ),
+        make_line(
+            "mode",
+            settings.color_mode.name().to_lowercase(),
+            app.focus == Focus::Mode,
+        ),
+        make_line(
+            "particles",
+            format!("{}", app.simulation.num_particles),
+            app.focus == Focus::Particles,
+        ),
+        make_line(
+            "seed",
+            app.simulation.seed_pattern.name().to_lowercase(),
+            app.focus == Focus::Seed,
+        ),
         make_line(
             "speed",
             format!("{}", app.steps_per_frame),
             app.focus == Focus::Speed,
-        ),
-        make_line(
-            "sticky",
-            format!("{:.2}", app.simulation.stickiness),
-            app.focus == Focus::Stickiness,
-        ),
-        make_line(
-            "gradient",
-            format!("{:.1}", settings.stickiness_gradient),
-            app.focus == Focus::StickyGradient,
-        ),
-        make_line(
-            "tipstick",
-            format!("{:.1}", settings.tip_stickiness),
-            app.focus == Focus::TipSticky,
-        ),
-        make_line(
-            "walk",
-            format!("{:.1}", settings.walk_step_size),
-            app.focus == Focus::WalkStep,
         ),
     ];
 

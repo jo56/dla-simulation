@@ -562,6 +562,14 @@ fn run_app<B: ratatui::backend::Backend>(
                             app.focus = Focus::WalkStep;
                         }
 
+                        // j/k for adjusting focused parameter values
+                        KeyCode::Char('j') if app.focus.is_param() => {
+                            app.adjust_focused_down();
+                        }
+                        KeyCode::Char('k') if app.focus.is_param() => {
+                            app.adjust_focused_up();
+                        }
+
                         // Navigation
                         KeyCode::Tab => app.next_focus(),
                         KeyCode::BackTab => app.prev_focus(),
@@ -569,7 +577,7 @@ fn run_app<B: ratatui::backend::Backend>(
                             if app.show_help {
                                 app.scroll_help_up();
                             } else if app.focus.is_param() {
-                                app.adjust_focused_up();
+                                app.prev_focus();
                             } else {
                                 app.scroll_controls_up();
                             }
@@ -578,7 +586,7 @@ fn run_app<B: ratatui::backend::Backend>(
                             if app.show_help {
                                 app.scroll_help_down(ui::HELP_CONTENT_LINES);
                             } else if app.focus.is_param() {
-                                app.adjust_focused_down();
+                                app.next_focus();
                             } else {
                                 let term_size = terminal.size().unwrap_or_default();
                                 let visible = ui::get_controls_visible_lines(term_size.height);
