@@ -53,12 +53,12 @@ impl TextInputPopup {
 }
 
 /// Focus state for parameter editing in the sidebar
-/// Alphabetically ordered for consistent UI display
+/// Navigation follows grouped order: Movement → Sticking → Spawn → Visual
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Focus {
     #[default]
     None,
-    // Alphabetical order
+    // Parameters (enum variants kept alphabetical, navigation order defined in next/prev)
     Age,            // color by age toggle
     Boundary,
     ColorScheme,
@@ -88,65 +88,73 @@ pub enum Focus {
 }
 
 impl Focus {
-    /// Tab cycles through parameters in alphabetical order
+    /// Navigate to next parameter in grouped order (Movement → Sticking → Spawn → Visual)
     pub fn next(&self) -> Focus {
         match self {
-            Focus::None | Focus::Controls => Focus::Age,
-            Focus::Age => Focus::Boundary,
-            Focus::Boundary => Focus::ColorScheme,
-            Focus::ColorScheme => Focus::Direction,
-            Focus::Direction => Focus::EscapeMult,
-            Focus::EscapeMult => Focus::Force,
-            Focus::Force => Focus::Highlight,
-            Focus::Highlight => Focus::Invert,
-            Focus::Invert => Focus::MaxIterations,
-            Focus::MaxIterations => Focus::MinRadius,
-            Focus::MinRadius => Focus::Mode,
-            Focus::Mode => Focus::MultiContact,
-            Focus::MultiContact => Focus::Neighborhood,
-            Focus::Neighborhood => Focus::Particles,
-            Focus::Particles => Focus::RadialBias,
-            Focus::RadialBias => Focus::Seed,
-            Focus::Seed => Focus::SideSticky,
-            Focus::SideSticky => Focus::Spawn,
-            Focus::Spawn => Focus::SpawnOffset,
-            Focus::SpawnOffset => Focus::Speed,
-            Focus::Speed => Focus::Stickiness,
-            Focus::Stickiness => Focus::StickyGradient,
-            Focus::StickyGradient => Focus::TipSticky,
-            Focus::TipSticky => Focus::WalkStep,
-            Focus::WalkStep => Focus::Age, // Loop back
+            Focus::None | Focus::Controls => Focus::WalkStep,
+            // Movement
+            Focus::WalkStep => Focus::Direction,
+            Focus::Direction => Focus::Force,
+            Focus::Force => Focus::RadialBias,
+            // Sticking
+            Focus::RadialBias => Focus::Stickiness,
+            Focus::Stickiness => Focus::TipSticky,
+            Focus::TipSticky => Focus::SideSticky,
+            Focus::SideSticky => Focus::StickyGradient,
+            Focus::StickyGradient => Focus::Neighborhood,
+            Focus::Neighborhood => Focus::MultiContact,
+            // Spawn
+            Focus::MultiContact => Focus::Spawn,
+            Focus::Spawn => Focus::Boundary,
+            Focus::Boundary => Focus::SpawnOffset,
+            Focus::SpawnOffset => Focus::EscapeMult,
+            Focus::EscapeMult => Focus::MinRadius,
+            Focus::MinRadius => Focus::MaxIterations,
+            // Visual
+            Focus::MaxIterations => Focus::Mode,
+            Focus::Mode => Focus::ColorScheme,
+            Focus::ColorScheme => Focus::Age,
+            Focus::Age => Focus::Invert,
+            Focus::Invert => Focus::Highlight,
+            Focus::Highlight => Focus::Particles,
+            Focus::Particles => Focus::Seed,
+            Focus::Seed => Focus::Speed,
+            Focus::Speed => Focus::Speed, // Stop at boundary
         }
     }
 
-    /// Shift+Tab cycles through parameters in reverse alphabetical order
+    /// Navigate to previous parameter in grouped order
     pub fn prev(&self) -> Focus {
         match self {
-            Focus::None | Focus::Controls => Focus::WalkStep,
-            Focus::Age => Focus::WalkStep, // Loop back
-            Focus::Boundary => Focus::Age,
-            Focus::ColorScheme => Focus::Boundary,
-            Focus::Direction => Focus::ColorScheme,
-            Focus::EscapeMult => Focus::Direction,
-            Focus::Force => Focus::EscapeMult,
-            Focus::Highlight => Focus::Force,
-            Focus::Invert => Focus::Highlight,
-            Focus::MaxIterations => Focus::Invert,
-            Focus::MinRadius => Focus::MaxIterations,
-            Focus::Mode => Focus::MinRadius,
-            Focus::MultiContact => Focus::Mode,
-            Focus::Neighborhood => Focus::MultiContact,
-            Focus::Particles => Focus::Neighborhood,
-            Focus::RadialBias => Focus::Particles,
-            Focus::Seed => Focus::RadialBias,
-            Focus::SideSticky => Focus::Seed,
-            Focus::Spawn => Focus::SideSticky,
-            Focus::SpawnOffset => Focus::Spawn,
-            Focus::Speed => Focus::SpawnOffset,
-            Focus::Stickiness => Focus::Speed,
-            Focus::StickyGradient => Focus::Stickiness,
-            Focus::TipSticky => Focus::StickyGradient,
-            Focus::WalkStep => Focus::TipSticky,
+            Focus::None | Focus::Controls => Focus::Speed,
+            // Movement
+            Focus::WalkStep => Focus::WalkStep, // Stop at boundary
+            Focus::Direction => Focus::WalkStep,
+            Focus::Force => Focus::Direction,
+            Focus::RadialBias => Focus::Force,
+            // Sticking
+            Focus::Stickiness => Focus::RadialBias,
+            Focus::TipSticky => Focus::Stickiness,
+            Focus::SideSticky => Focus::TipSticky,
+            Focus::StickyGradient => Focus::SideSticky,
+            Focus::Neighborhood => Focus::StickyGradient,
+            Focus::MultiContact => Focus::Neighborhood,
+            // Spawn
+            Focus::Spawn => Focus::MultiContact,
+            Focus::Boundary => Focus::Spawn,
+            Focus::SpawnOffset => Focus::Boundary,
+            Focus::EscapeMult => Focus::SpawnOffset,
+            Focus::MinRadius => Focus::EscapeMult,
+            Focus::MaxIterations => Focus::MinRadius,
+            // Visual
+            Focus::Mode => Focus::MaxIterations,
+            Focus::ColorScheme => Focus::Mode,
+            Focus::Age => Focus::ColorScheme,
+            Focus::Invert => Focus::Age,
+            Focus::Highlight => Focus::Invert,
+            Focus::Particles => Focus::Highlight,
+            Focus::Seed => Focus::Particles,
+            Focus::Speed => Focus::Seed,
         }
     }
 
