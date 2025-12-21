@@ -258,10 +258,10 @@ impl DlaSimulation {
             (x, y) = self.apply_boundary(x, y, x_max, y_max);
 
             // Handle absorb boundary - if we hit edge, respawn
-            if self.settings.boundary_behavior == BoundaryBehavior::Absorb {
-                if x <= BOUNDARY_MARGIN || x >= x_max || y <= BOUNDARY_MARGIN || y >= y_max {
-                    return true; // Respawn
-                }
+            if self.settings.boundary_behavior == BoundaryBehavior::Absorb
+                && (x <= BOUNDARY_MARGIN || x >= x_max || y <= BOUNDARY_MARGIN || y >= y_max)
+            {
+                return true; // Respawn
             }
         }
 
@@ -835,11 +835,12 @@ impl DlaSimulation {
                         for dx in 0..*box_size {
                             let x = bx + dx;
                             let y = by + dy;
-                            if x < self.grid_width && y < self.grid_height {
-                                if self.grid[y * self.grid_width + x].is_some() {
-                                    count += 1;
-                                    break 'box_check;
-                                }
+                            if x < self.grid_width
+                                && y < self.grid_height
+                                && self.grid[y * self.grid_width + x].is_some()
+                            {
+                                count += 1;
+                                break 'box_check;
                             }
                         }
                     }

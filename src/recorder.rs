@@ -250,9 +250,9 @@ impl GifEncoder {
                 let mut best_idx = 0u8;
                 let mut best_dist = u32::MAX;
                 for (i, (c, _)) in colors.iter().enumerate() {
-                    let dr = (color.0 as i32 - c.0 as i32).abs() as u32;
-                    let dg = (color.1 as i32 - c.1 as i32).abs() as u32;
-                    let db = (color.2 as i32 - c.2 as i32).abs() as u32;
+                    let dr = (color.0 as i32 - c.0 as i32).unsigned_abs();
+                    let dg = (color.1 as i32 - c.1 as i32).unsigned_abs();
+                    let db = (color.2 as i32 - c.2 as i32).unsigned_abs();
                     let dist = dr * dr + dg * dg + db * db;
                     if dist < best_dist {
                         best_dist = dist;
@@ -272,14 +272,14 @@ impl FrameEncoder for GifEncoder {
     fn add_frame(&mut self, frame: &RgbFrame) -> Result<(), String> {
         let (indices, palette) = Self::quantize_frame(&frame.pixels);
 
-        let mut gif_frame = gif::Frame::default();
-        gif_frame.width = self.width;
-        gif_frame.height = self.height;
-        gif_frame.delay = self.frame_delay;
-        gif_frame.buffer = std::borrow::Cow::Owned(indices);
-
-        // Set local palette for this frame
-        gif_frame.palette = Some(palette);
+        let gif_frame = gif::Frame {
+            width: self.width,
+            height: self.height,
+            delay: self.frame_delay,
+            buffer: std::borrow::Cow::Owned(indices),
+            palette: Some(palette),
+            ..Default::default()
+        };
 
         self.encoder
             .write_frame(&gif_frame)
@@ -479,6 +479,7 @@ impl Recorder {
     }
 
     /// Render simulation state to RGB frame buffer (static version to avoid borrow issues)
+    #[allow(clippy::too_many_arguments)]
     fn render_frame_static(
         frame: &mut RgbFrame,
         simulation: &DlaSimulation,

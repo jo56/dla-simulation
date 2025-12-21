@@ -33,6 +33,7 @@ pub struct BrailleCell {
 }
 
 /// Render the simulation grid to Braille characters (uses LUT for fast color lookup)
+#[allow(clippy::too_many_arguments)]
 pub fn render_to_braille(
     simulation: &DlaSimulation,
     canvas_width: u16,
@@ -72,8 +73,8 @@ pub fn render_to_braille(
             let base_bx = cx as usize * 2;
             let base_by = cy as usize * 4;
 
-            for dx in 0..2 {
-                for dy in 0..4 {
+            for (dx, dots_col) in BRAILLE_DOTS.iter().enumerate() {
+                for (dy, &dot_pattern) in dots_col.iter().enumerate() {
                     let braille_x = base_bx + dx;
                     let braille_y = base_by + dy;
 
@@ -81,7 +82,7 @@ pub fn render_to_braille(
                     let sim_y = (braille_y as f32 * scale_y) as usize;
 
                     if let Some(particle) = simulation.get_particle(sim_x, sim_y) {
-                        pattern |= BRAILLE_DOTS[dx][dy];
+                        pattern |= dot_pattern;
                         dot_count += 1;
 
                         // Check if this is a recent particle

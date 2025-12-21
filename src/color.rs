@@ -90,8 +90,8 @@ impl ColorScheme {
     /// Call this once when color scheme changes, then use map_from_lut() for rendering
     pub fn build_lut(&self) -> ColorLut {
         let mut lut = [Color::White; 256];
-        for i in 0..256 {
-            lut[i] = self.map(i as f32 / 255.0);
+        for (i, color) in lut.iter_mut().enumerate() {
+            *color = self.map(i as f32 / 255.0);
         }
         lut
     }
