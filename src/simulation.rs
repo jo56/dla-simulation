@@ -250,9 +250,62 @@ impl DlaSimulation {
                 self.apply_walk_bias(base_angle, x, y, center_x, center_y)
             };
 
+            // Calculate new position
+            let new_x = x + walk_step * walk_angle.cos();
+            let new_y = y + walk_step * walk_angle.sin();
+
+            // Path sampling for large steps to prevent tunneling through the cluster
+            if walk_step > 1.5 {
+                // Sample along the path using Bresenham-style stepping
+                if let Some((stick_x, stick_y, neighbor_count)) =
+                    self.sample_path_for_collision(x, y, new_x, new_y)
+                {
+                    // Found occupied cell along path - try to stick at the last empty position
+                    let distance = ((stick_x - center_x).powi(2) + (stick_y - center_y).powi(2)).sqrt();
+                    let effective_stickiness = self.settings.effective_stickiness(
+                        neighbor_count,
+                        distance,
+                        self.stickiness,
+                    );
+
+                    if self.rng.gen::<f32>() < effective_stickiness {
+                        let ix = stick_x as usize;
+                        let iy = stick_y as usize;
+                        if ix > 0 && ix < self.grid_width - 1 && iy > 0 && iy < self.grid_height - 1 {
+                            let idx = iy * self.grid_width + ix;
+                            if self.grid[idx].is_none() {
+                                let direction = last_dy.atan2(last_dx);
+                                self.grid[idx] = Some(ParticleData {
+                                    age: self.particles_stuck,
+                                    distance,
+                                    direction,
+                                    neighbor_count: neighbor_count as u8,
+                                });
+                                self.particles_stuck += 1;
+                                self.max_radius = self.max_radius.max(distance);
+                                return true;
+                            }
+                        }
+                    }
+                    // Didn't stick - respawn particle (don't let it continue through cluster)
+                    return true;
+                }
+            }
+
+            // Check if landing position is occupied - respawn instead of walking through
+            let land_ix = new_x as usize;
+            let land_iy = new_y as usize;
+            if land_ix < self.grid_width && land_iy < self.grid_height {
+                let land_idx = land_iy * self.grid_width + land_ix;
+                if self.grid[land_idx].is_some() {
+                    // Landing on occupied cell - respawn particle
+                    return true;
+                }
+            }
+
             // Take walk step
-            x += walk_step * walk_angle.cos();
-            y += walk_step * walk_angle.sin();
+            x = new_x;
+            y = new_y;
 
             // Apply boundary behavior
             (x, y) = self.apply_boundary(x, y, x_max, y_max);
@@ -410,6 +463,69 @@ impl DlaSimulation {
             }
         }
         (x, y)
+    }
+
+    /// Sample path from (x0, y0) to (x1, y1) for collisions with occupied cells.
+    /// Returns Some((last_empty_x, last_empty_y, neighbor_count)) if an occupied cell is found,
+    /// where the coordinates are the last empty cell before the collision.
+    /// Returns None if the path is clear.
+    fn sample_path_for_collision(
+        &self,
+        x0: f32,
+        y0: f32,
+        x1: f32,
+        y1: f32,
+    ) -> Option<(f32, f32, usize)> {
+        let dx = x1 - x0;
+        let dy = y1 - y0;
+        let dist = (dx * dx + dy * dy).sqrt();
+
+        if dist < 1.0 {
+            return None;
+        }
+
+        // Number of samples along the path (at least 1 per unit distance)
+        let num_samples = dist.ceil() as usize;
+        let mut last_empty_x = x0;
+        let mut last_empty_y = y0;
+
+        for i in 1..=num_samples {
+            let t = i as f32 / num_samples as f32;
+            let sample_x = x0 + t * dx;
+            let sample_y = y0 + t * dy;
+
+            let ix = sample_x as usize;
+            let iy = sample_y as usize;
+
+            // Bounds check
+            if ix >= self.grid_width || iy >= self.grid_height {
+                continue;
+            }
+
+            let idx = iy * self.grid_width + ix;
+
+            if self.grid[idx].is_some() {
+                // Found occupied cell - return the last empty position
+                // Also count neighbors at that position for stickiness calculation
+                let last_ix = last_empty_x as usize;
+                let last_iy = last_empty_y as usize;
+                let (neighbor_count, _) = if last_ix > 0
+                    && last_ix < self.grid_width - 1
+                    && last_iy > 0
+                    && last_iy < self.grid_height - 1
+                {
+                    self.count_neighbors(last_ix, last_iy)
+                } else {
+                    (1, true) // Edge case - assume 1 neighbor
+                };
+                return Some((last_empty_x, last_empty_y, neighbor_count));
+            }
+
+            last_empty_x = sample_x;
+            last_empty_y = sample_y;
+        }
+
+        None
     }
 
     /// Reset the simulation with the current seed pattern

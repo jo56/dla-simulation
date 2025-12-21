@@ -123,8 +123,7 @@ impl SpawnMode {
 /// Boundary behavior - what happens when particles hit grid edges
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub enum BoundaryBehavior {
-    /// Stop at edge (current behavior)
-    #[default]
+    /// Stop at edge
     Clamp,
     /// Wrap to opposite side (toroidal)
     Wrap,
@@ -132,7 +131,8 @@ pub enum BoundaryBehavior {
     Bounce,
     /// Particles stick to edges
     Stick,
-    /// Particles are removed/respawned at edges
+    /// Particles are removed/respawned at edges (canonical DLA)
+    #[default]
     Absorb,
 }
 
@@ -268,28 +268,28 @@ pub struct SimulationSettings {
 impl Default for SimulationSettings {
     fn default() -> Self {
         Self {
-            // Movement
+            // Movement - canonical DLA uses unit lattice steps
             walk_step_size: 1.0,
             walk_bias_angle: 0.0,
             walk_bias_strength: 0.0,
             radial_bias: 0.0,
-            adaptive_step: true,
+            adaptive_step: false, // Disabled by default for accurate DLA
             adaptive_step_factor: 3.0,
-            lattice_walk: false,
+            lattice_walk: true, // Classic 4-direction lattice walk
 
             // Sticking
-            neighborhood: NeighborhoodType::default(),
+            neighborhood: NeighborhoodType::default(), // VonNeumann (4-neighbor)
             multi_contact_min: 1,
             tip_stickiness: 1.0,
             side_stickiness: 1.0,
             stickiness_gradient: 0.0,
 
-            // Spawn/Boundary
-            spawn_mode: SpawnMode::default(),
-            boundary_behavior: BoundaryBehavior::default(),
+            // Spawn/Boundary - unbounded-space behavior
+            spawn_mode: SpawnMode::default(), // Circle
+            boundary_behavior: BoundaryBehavior::Absorb, // Respawn at edges for unbounded feel
             spawn_radius_offset: 10.0,
-            escape_multiplier: 2.0,
-            min_spawn_radius: 50.0,
+            escape_multiplier: 3.0, // Higher multiplier reduces premature respawns
+            min_spawn_radius: 15.0, // Lower for faster small-cluster convergence
             max_walk_iterations: 10000,
 
             // Visual
